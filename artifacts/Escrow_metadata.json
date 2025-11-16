@@ -1,0 +1,249 @@
+{
+	"compiler": {
+		"version": "0.8.30+commit.73712a01"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_propertyId",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "_buyer",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "_seller",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "_agent",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "_titleRegistry",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "_commissionContract",
+						"type": "address"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "constructor"
+			},
+			{
+				"inputs": [],
+				"name": "agent",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "amount",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "buyer",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "commissionContract",
+				"outputs": [
+					{
+						"internalType": "contract AgentCommission",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "depositFunds",
+				"outputs": [],
+				"stateMutability": "payable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "propertyId",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "refundBuyer",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "releaseFunds",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "seller",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "state",
+				"outputs": [
+					{
+						"internalType": "enum Escrow.EscrowState",
+						"name": "",
+						"type": "uint8"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "titleRegistry",
+				"outputs": [
+					{
+						"internalType": "contract TitleRegistry",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "viewStatus",
+				"outputs": [
+					{
+						"internalType": "string",
+						"name": "",
+						"type": "string"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {
+				"depositFunds()": {
+					"notice": "buyer deposits the full purchase amount into escrow"
+				},
+				"refundBuyer()": {
+					"notice": "refunds buyer if deal is cancelled before completion"
+				},
+				"releaseFunds()": {
+					"notice": "releases funds to seller + commission to agent requires that the TitleRegistry shows the buyer as current owner"
+				},
+				"viewStatus()": {
+					"notice": "a convenience function to see current state as string (for demo)"
+				}
+			},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"Escrow.sol": "Escrow"
+		},
+		"evmVersion": "prague",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"AgentCommission.sol": {
+			"keccak256": "0xd8acbffff5199f2c0299f77a4772604b5299a0d7eb8b82b77faca57dd9a7769f",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://0ad3c0c02401b8f4038cbe47ec5accb4cf099ebce35dc3062fe23b257f70f9a7",
+				"dweb:/ipfs/QmStwuSvaEuBokwKFAgihCoGmkGpiBZ6K5F1qneR8DnR6y"
+			]
+		},
+		"Escrow.sol": {
+			"keccak256": "0x0230314d623ae0dcbdde593ed39774675d3127a241e74e676f3ca6ca5ef3cb09",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://396a6a95bea4ae073c4f1995e6ecd565588797dc694f59da23b4a20d51194813",
+				"dweb:/ipfs/QmWSJy39NKeQhEotbw4T2tyArC4QNGk59X8pYevp3SGyRS"
+			]
+		},
+		"TitleRegistry.sol": {
+			"keccak256": "0xa4c504339fdf4b565f446248d8f7565e5610082808e41e734a7f83977c94ff3b",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://7d9e3ea0294c0671f53747e8be1ea33ce58aa00194ee163f597d5f1d64ef8c06",
+				"dweb:/ipfs/QmboExu7X6pwGPFJcZhZPe8qEAxjDHXrmDJDpopwVYxbiE"
+			]
+		}
+	},
+	"version": 1
+}

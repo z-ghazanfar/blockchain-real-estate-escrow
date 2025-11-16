@@ -1,0 +1,138 @@
+{
+	"compiler": {
+		"version": "0.8.30+commit.73712a01"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"name": "commissionBalance",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "commissionBps",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "agent",
+						"type": "address"
+					}
+				],
+				"name": "getCommissionBalance",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "agent",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "saleAmount",
+						"type": "uint256"
+					}
+				],
+				"name": "recordCommission",
+				"outputs": [],
+				"stateMutability": "payable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address payable",
+						"name": "agent",
+						"type": "address"
+					}
+				],
+				"name": "releaseCommission",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {
+				"getCommissionBalance(address)": {
+					"notice": "helper for view"
+				},
+				"recordCommission(address,uint256)": {
+					"notice": "called by the Escrow contract. msg.value must equal commission amount."
+				},
+				"releaseCommission(address)": {
+					"notice": "agent withdraws their accumulated commission"
+				}
+			},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"AgentCommission.sol": "AgentCommission"
+		},
+		"evmVersion": "prague",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"AgentCommission.sol": {
+			"keccak256": "0xd8acbffff5199f2c0299f77a4772604b5299a0d7eb8b82b77faca57dd9a7769f",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://0ad3c0c02401b8f4038cbe47ec5accb4cf099ebce35dc3062fe23b257f70f9a7",
+				"dweb:/ipfs/QmStwuSvaEuBokwKFAgihCoGmkGpiBZ6K5F1qneR8DnR6y"
+			]
+		}
+	},
+	"version": 1
+}
