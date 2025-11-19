@@ -7,33 +7,33 @@ contract TitleRegistry {
         bool exists;
     }
 
-    mapping(uint256 => Property) public properties;
+    mapping(string => Property) public properties;
 
     /// @notice registers a new property with an initial owner
-    function registerProperty(uint256 propertyId, address owner) external {
-        require(!properties[propertyId].exists, "Already registered");
-        properties[propertyId] = Property({
+    function registerProperty(string memory propertyName, address owner) external {
+        require(!properties[propertyName].exists, "Already registered");
+        properties[propertyName] = Property({
             owner: owner,
             exists: true
         });
     }
 
     /// @notice transfers to a new owner (only current owner can do this)
-    function transferOwnership(uint256 propertyId, address newOwner) external {
-        require(properties[propertyId].exists, "Not registered");
-        require(msg.sender == properties[propertyId].owner, "Only owner");
-        properties[propertyId].owner = newOwner;
+    function transferOwnership(string memory propertyName, address newOwner) external {
+        require(properties[propertyName].exists, "Not registered");
+        require(msg.sender == properties[propertyName].owner, "Only owner");
+        properties[propertyName].owner = newOwner;
     }
 
-    /// @notice checks to see if claimedOwner currently owns propertyId
-    function verifyOwnership(uint256 propertyId, address claimedOwner)
+    /// @notice checks to see if claimedOwner currently owns propertyName
+    function verifyOwnership(string memory propertyName, address claimedOwner)
         external
         view
         returns (bool)
     {
-        if (!properties[propertyId].exists) {
+        if (!properties[propertyName].exists) {
             return false;
         }
-        return properties[propertyId].owner == claimedOwner;
+        return properties[propertyName].owner == claimedOwner;
     }
 }

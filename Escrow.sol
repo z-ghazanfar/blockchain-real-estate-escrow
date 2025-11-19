@@ -10,7 +10,7 @@ contract Escrow {
     TitleRegistry public titleRegistry;
     AgentCommission public commissionContract;
 
-    uint256 public propertyId;
+    string public propertyName;
     address public buyer;
     address public seller;
     address public agent;
@@ -19,14 +19,14 @@ contract Escrow {
     EscrowState public state;
 
     constructor(
-        uint256 _propertyId,
+        string memory _propertyName,
         address _buyer,
         address _seller,
         address _agent,
         address _titleRegistry,
         address _commissionContract
     ) {
-        propertyId = _propertyId;
+        propertyName = _propertyName;
         buyer = _buyer;
         seller = _seller;
         agent = _agent;
@@ -50,7 +50,7 @@ contract Escrow {
     function releaseFunds() external {
         require(state == EscrowState.Funded, "Not in funded state");
         require(
-            titleRegistry.verifyOwnership(propertyId, buyer),
+            titleRegistry.verifyOwnership(propertyName, buyer),
             "Property not yet owned by buyer"
         );
 
