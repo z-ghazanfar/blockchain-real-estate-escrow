@@ -21,7 +21,7 @@ for (const key of REQUIRED_ENV) {
 }
 
 const TITLE_REGISTRY_ABI = [
-  "event VerificationRequested(string indexed propertyId, address indexed requester, string metadataURI)",
+  "event VerificationRequested(string propertyId,string street,string city,string state,string postalCode,string country,address indexed requester)",
   "function recordVerificationResult(string propertyId, bool propertyExists, string evidenceURI) external"
 ];
 
@@ -33,9 +33,77 @@ const registry = new ethers.Contract(
   wallet
 );
 
-async function handleVerification(propertyId, requester, metadataURI) {
-  console.log(`\n🔍 Verification requested for ${propertyId} by ${requester}`);
-  const result = await lookupProperty(propertyId, metadataURI);
+function toPlainString(value) {
+  if (typeof value === "string") {
+    return value;
+  }
+  if (value instanceof Uint8Array) {
+    try {
+      return ethers.toUtf8String(value);
+    } catch (err) {
+      return "";
+    }
+  }
+  if (value && typeof value === "object") {
+    if (ethers.Result && ethers.Result.isResult?.(value)) {
+      return toPlainString(value[0]);
+    }
+    if (value.propertyId) {
+      return toPlainString(value.propertyId);
+    }
+    if (value.value) {
+      return toPlainString(value.value);
+    }
+    const keys = Object.keys(value);
+    if (keys.length > 0) {
+      return toPlainString(value[keys[0]]);
+    }
+    if (typeof value.toString === "function") {
+      const str = value.toString();
+      if (str && str !== "[object Object]") {
+        return str;
+      }
+    }
+  }
+  return "";
+}
+
+function normalizeAddress(payload) {
+  return {
+    propertyId: toPlainString(payload.propertyId),
+    street: toPlainString(payload.street),
+    city: toPlainString(payload.city),
+    state: toPlainString(payload.state),
+    postalCode: toPlainString(payload.postalCode),
+    country: toPlainString(payload.country),
+    requester: payload.requester
+  };
+}
+
+async function handleVerification(payload) {
+  const {
+    propertyId,
+    street,
+    city,
+    state,
+    postalCode,
+    country,
+    requester
+  } = normalizeAddress(payload);
+  if (!propertyId) {
+    throw new Error("Invalid property id");
+  }
+  console.log(
+    `\n🔍 Verification requested for ${propertyId} by ${requester}\n  ↳ ${street}, ${city}, ${state} ${postalCode}, ${country}`
+  );
+  const result = await lookupProperty({
+    propertyId,
+    street,
+    city,
+    state,
+    postalCode,
+    country
+  });
   console.log(
     `Resolved property ${propertyId} => exists=${result.exists}, evidence=${result.evidenceURI}`
   );
@@ -54,9 +122,17 @@ export function startVerifier() {
   console.log(`Listening to TitleRegistry @ ${registry.target}`);
   registry.on(
     "VerificationRequested",
-    async (propertyId, requester, metadataURI) => {
+    async (propertyId, street, city, state, postalCode, country, requester) => {
       try {
-        await handleVerification(propertyId, requester, metadataURI);
+        await handleVerification({
+          propertyId,
+          street,
+          city,
+          state,
+          postalCode,
+          country,
+          requester
+        });
       } catch (err) {
         console.error(
           `❌ Failed to process ${propertyId}: ${err.shortMessage || err.message}`

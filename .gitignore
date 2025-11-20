@@ -1,1 +1,22 @@
+# Environment / secrets
 .env
+.env.*
+
+# Node dependencies
+node_modules/
+automation/node_modules/
+verifier/node_modules/
+
+# Hardhat artifacts
+artifacts/
+cache/
+
+# Coverage / logs / misc
+coverage/
+*.log
+.DS_Store
+
+# Local tooling
+.idea/
+.vscode/
+*.swp

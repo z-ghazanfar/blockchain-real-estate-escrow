@@ -39,8 +39,8 @@ The service will:
 3. Try to match the property ID in `mock-properties.json`. If no hit, it
    transforms the ID (e.g., `123-MAIN-ST-NY`) into a one-line address and calls
    the public US Census geocoding API. A match there confirms the address exists
-   and produces an evidence URL. If both fail, it attempts to reach the seller’s
-   metadata URI as a last resort.
+   and produces an evidence URL. If both fail, it emits a rejection with a
+   placeholder evidence URI so auditors know it was denied.
 4. Call `recordVerificationResult` with a boolean and an evidence URI derived
    from the successful lookup (Census URL, municipal portal, etc.).
 

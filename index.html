@@ -2,381 +2,904 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Transactify — Real Estate Escrow Marketplace</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transactify — Decentralized Real Estate Protocol</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.0/dist/ethers.umd.min.js"></script>
   <style>
-    :root {
-      color-scheme: light;
-      --primary: #0a4fd5;
-      --secondary: #0f172a;
-      --canvas: #f0f4ff;
-      --muted: #8a94ad;
-      --card: #ffffff;
-    }
-    * { box-sizing: border-box; }
-    body {
+    * {
       margin: 0;
-      font-family: 'Space Grotesk', sans-serif;
-      background: linear-gradient(180deg, rgba(10,79,213,.07), transparent 45%), var(--canvas);
-      color: var(--secondary);
+      padding: 0;
+      box-sizing: border-box;
     }
-    a { text-decoration: none; color: inherit; }
+
+    :root {
+      --neon-blue: #00d4ff;
+      --neon-purple: #a259ff;
+      --neon-pink: #ff006e;
+      --dark-bg: #0a0e27;
+      --darker-bg: #050814;
+      --card-bg: rgba(15, 23, 42, 0.6);
+      --border: rgba(0, 212, 255, 0.2);
+      --text-primary: #e2e8f0;
+      --text-secondary: #94a3b8;
+      --glass: rgba(255, 255, 255, 0.03);
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--darker-bg);
+      color: var(--text-primary);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    .grid-background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: 
+        linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+      background-size: 50px 50px;
+      animation: gridMove 20s linear infinite;
+      z-index: 0;
+    }
+
+    @keyframes gridMove {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(50px, 50px); }
+    }
+
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.4;
+      z-index: 1;
+      animation: float 20s ease-in-out infinite;
+    }
+
+    .orb-1 {
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, var(--neon-blue), transparent);
+      top: -200px;
+      left: -200px;
+    }
+
+    .orb-2 {
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, var(--neon-purple), transparent);
+      top: 50%;
+      right: -150px;
+      animation-delay: -10s;
+    }
+
+    .orb-3 {
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, var(--neon-pink), transparent);
+      bottom: -100px;
+      left: 30%;
+      animation-delay: -5s;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      33% { transform: translate(50px, -50px) rotate(120deg); }
+      66% { transform: translate(-50px, 50px) rotate(240deg); }
+    }
+
     header {
-      padding: 24px 5vw;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      background: rgba(5, 8, 20, 0.8);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    nav {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 1.25rem 2rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      position: sticky;
-      top: 0;
-      z-index: 5;
-      background: rgba(240,244,255,0.9);
-      backdrop-filter: blur(8px);
-      border-bottom: 1px solid rgba(10,79,213,.08);
     }
-    .brand {
-      font-size: 28px;
-      font-weight: 600;
-      letter-spacing: -0.5px;
-      color: var(--primary);
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 800;
+      font-family: 'Space Mono', monospace;
+      color: var(--neon-blue);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
     }
-    nav {
+
+    .nav-links {
       display: flex;
-      gap: 26px;
-      font-size: 15px;
-      color: var(--muted);
+      gap: 2.5rem;
+      align-items: center;
     }
-    .cta {
-      border: none;
-      border-radius: 999px;
-      padding: 12px 24px;
-      font-size: 15px;
+
+    .nav-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: all 0.3s;
+      position: relative;
+    }
+
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+      transition: width 0.3s;
+    }
+
+    .nav-links a:hover {
+      color: var(--neon-blue);
+    }
+
+    .nav-links a:hover::after {
+      width: 100%;
+    }
+
+    .btn {
+      padding: 0.875rem 2rem;
+      border-radius: 0.5rem;
       font-weight: 600;
+      font-size: 0.9rem;
       cursor: pointer;
-      background: var(--primary);
-      color: #fff;
-      box-shadow: 0 18px 32px rgba(10,79,213,.2);
+      transition: all 0.3s;
+      border: none;
+      text-decoration: none;
+      display: inline-block;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      position: relative;
+      overflow: hidden;
     }
-    .cta.secondary {
-      background: transparent;
-      color: var(--primary);
-      border: 1px solid rgba(10,79,213,.3);
-      box-shadow: none;
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+      color: white;
+      border: 1px solid var(--neon-blue);
+      box-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
     }
-    main {
-      padding: 60px 5vw 100px;
-      display: flex;
-      flex-direction: column;
-      gap: 70px;
+
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.5s;
     }
+
+    .btn-primary:hover::before {
+      left: 100%;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 40px rgba(0, 212, 255, 0.5);
+    }
+
+    .btn-secondary {
+      background: var(--glass);
+      color: var(--neon-blue);
+      border: 1px solid var(--neon-blue);
+      backdrop-filter: blur(10px);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(0, 212, 255, 0.1);
+      box-shadow: 0 0 30px rgba(0, 212, 255, 0.2);
+    }
+
     .hero {
+      position: relative;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 10rem 2rem 6rem;
+      text-align: center;
+      z-index: 10;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      padding: 0.5rem 1.5rem;
+      background: var(--glass);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+      border-radius: 2rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 2rem;
+      font-family: 'Space Mono', monospace;
+      color: var(--neon-blue);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      animation: fadeInUp 0.8s ease;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .hero h1 {
+      font-size: clamp(2.5rem, 7vw, 5.5rem);
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(135deg, #fff, var(--neon-blue), var(--neon-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: fadeInUp 0.8s ease 0.2s both;
+    }
+
+    .hero .subtitle {
+      font-size: 1.25rem;
+      max-width: 800px;
+      margin: 0 auto 3rem;
+      color: var(--text-secondary);
+      font-weight: 300;
+      line-height: 1.8;
+      animation: fadeInUp 0.8s ease 0.4s both;
+    }
+
+    .hero-cta {
+      display: flex;
+      gap: 1.5rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      animation: fadeInUp 0.8s ease 0.6s both;
+    }
+
+    .terminal {
+      max-width: 900px;
+      margin: 4rem auto 0;
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      animation: fadeInUp 0.8s ease 0.8s both;
+    }
+
+    .terminal-header {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .terminal-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--text-secondary);
+    }
+
+    .terminal-dot:nth-child(1) { background: #ff5f56; }
+    .terminal-dot:nth-child(2) { background: #ffbd2e; }
+    .terminal-dot:nth-child(3) { background: #27c93f; }
+
+    .terminal-body {
+      padding: 2rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.9rem;
+      color: var(--neon-blue);
+      text-align: left;
+    }
+
+    .terminal-line {
+      margin-bottom: 0.5rem;
+      opacity: 0;
+      animation: terminalFade 0.5s ease forwards;
+    }
+
+    .terminal-line:nth-child(1) { animation-delay: 1s; }
+    .terminal-line:nth-child(2) { animation-delay: 1.2s; }
+    .terminal-line:nth-child(3) { animation-delay: 1.4s; }
+    .terminal-line:nth-child(4) { animation-delay: 1.6s; }
+
+    @keyframes terminalFade {
+      to { opacity: 1; }
+    }
+
+    .terminal-command { color: var(--neon-purple); }
+    .terminal-success { color: #27c93f; }
+
+    .stats {
+      position: relative;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 4rem 2rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 2rem;
+      z-index: 10;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      padding: 2.5rem 2rem;
+      border-radius: 1rem;
+      border: 1px solid var(--border);
+      text-align: center;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.1), transparent);
+      transition: left 0.5s;
+    }
+
+    .stat-card:hover::before {
+      left: 100%;
+    }
+
+    .stat-card:hover {
+      border-color: var(--neon-blue);
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px rgba(0, 212, 255, 0.2);
+    }
+
+    .stat-number {
+      font-size: 3rem;
+      font-weight: 800;
+      font-family: 'Space Mono', monospace;
+      background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-weight: 600;
+    }
+
+    .section {
+      position: relative;
+      padding: 8rem 2rem;
+      z-index: 10;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 5rem;
+    }
+
+    .section-badge {
+      display: inline-block;
+      padding: 0.5rem 1.5rem;
+      background: var(--glass);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+      color: var(--neon-purple);
+      border-radius: 2rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .section-title {
+      font-size: clamp(2rem, 4vw, 3.5rem);
+      font-weight: 800;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(135deg, #fff, var(--neon-blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .section-subtitle {
+      font-size: 1.125rem;
+      color: var(--text-secondary);
+      max-width: 700px;
+      margin: 0 auto;
+      line-height: 1.8;
+    }
+
+    .feature-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 40px;
-      align-items: center;
+      gap: 2rem;
     }
-    .hero h1 {
-      font-size: clamp(40px, 5vw, 64px);
-      margin: 0 0 16px;
-      letter-spacing: -1px;
+
+    .feature-card {
+      padding: 2.5rem;
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      border-radius: 1rem;
+      border: 1px solid var(--border);
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
     }
-    .hero p {
-      color: var(--muted);
-      font-size: 19px;
-      line-height: 1.6;
-      margin-bottom: 28px;
+
+    .feature-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.3s;
     }
-    .hero-mosaic {
-      background: var(--card);
-      border-radius: 28px;
-      padding: 28px;
-      box-shadow: 0 24px 60px rgba(15,23,42,.12);
-      display: grid;
-      gap: 16px;
+
+    .feature-card:hover::after {
+      transform: scaleX(1);
     }
-    .hero-mosaic .property {
-      border: 1px solid rgba(10,79,213,.08);
-      border-radius: 18px;
-      padding: 16px;
+
+    .feature-card:hover {
+      border-color: var(--neon-blue);
+      transform: translateY(-8px);
+      box-shadow: 0 20px 40px rgba(0, 212, 255, 0.2);
     }
-    .property h3 {
-      margin: 0;
-      font-size: 18px;
-    }
-    .property p {
-      margin: 4px 0 0;
-      color: var(--muted);
-      font-size: 14px;
-    }
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 18px;
-    }
-    .stat-card {
-      background: rgba(255,255,255,.85);
-      border-radius: 18px;
-      padding: 18px;
-      border: 1px solid rgba(10,79,213,.08);
-    }
-    .stat-card span {
-      display: block;
-      font-size: 32px;
-      font-weight: 600;
-      color: var(--primary);
-    }
-    section h2 {
-      font-size: 34px;
-      margin: 0 0 10px;
-    }
-    section p.subtitle {
-      color: var(--muted);
-      font-size: 18px;
-      margin: 0 0 24px;
-    }
-    .pillars {
-      display: grid;
-      gap: 22px;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    }
-    .pillar {
-      background: var(--card);
-      border-radius: 22px;
-      padding: 22px;
-      border: 1px solid rgba(10,79,213,.08);
-      box-shadow: 0 20px 45px rgba(15,23,42,.06);
-    }
-    .workflow {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 18px;
-    }
-    .workflow-card {
-      background: rgba(10,79,213,.08);
-      border-radius: 18px;
-      padding: 20px;
-    }
-    .workflow-card span {
-      display: inline-flex;
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
+
+    .feature-icon {
+      width: 70px;
+      height: 70px;
+      background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+      border-radius: 1rem;
+      display: flex;
       align-items: center;
       justify-content: center;
-      background: #fff;
-      color: var(--primary);
-      font-weight: 600;
-      margin-bottom: 10px;
+      font-size: 2rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 10px 30px rgba(0, 212, 255, 0.3);
     }
-    .closings-grid {
+
+    .feature-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: var(--text-primary);
+    }
+
+    .feature-description {
+      color: var(--text-secondary);
+      line-height: 1.8;
+    }
+
+    .workflow-timeline {
+      max-width: 1000px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .workflow-timeline::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: linear-gradient(180deg, var(--neon-blue), var(--neon-purple));
+      transform: translateX(-50%);
+    }
+
+    .workflow-step {
       display: grid;
-      gap: 18px;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      grid-template-columns: 1fr auto 1fr;
+      gap: 3rem;
+      margin-bottom: 4rem;
+      align-items: center;
     }
-    .closing {
-      background: var(--card);
-      border-radius: 22px;
-      padding: 22px;
-      border: 1px solid rgba(10,79,213,.1);
+
+    .workflow-step:nth-child(even) .step-content:first-child {
+      order: 3;
+      text-align: left;
     }
-    .closing h3 { margin: 0; }
-    footer {
-      background: #0f172a;
-      color: rgba(255,255,255,.74);
+
+    .step-content {
+      padding: 2rem;
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      transition: all 0.3s;
+    }
+
+    .step-content:hover {
+      border-color: var(--neon-blue);
+      transform: scale(1.05);
+      box-shadow: 0 20px 40px rgba(0, 212, 255, 0.2);
+    }
+
+    .step-number {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.5rem;
+      font-family: 'Space Mono', monospace;
+      box-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
+      z-index: 10;
+    }
+
+    .step-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      color: var(--text-primary);
+    }
+
+    .step-description {
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .cta-section {
+      background: var(--card-bg);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 6rem 2rem;
       text-align: center;
-      padding: 36px 5vw;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--neon-blue), transparent);
+    }
+
+    .cta-section h2 {
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 800;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #fff, var(--neon-blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .cta-section p {
+      font-size: 1.125rem;
+      color: var(--text-secondary);
+      margin-bottom: 2.5rem;
+    }
+
+    footer {
+      background: var(--darker-bg);
+      border-top: 1px solid var(--border);
+      padding: 3rem 2rem;
+      text-align: center;
+      color: var(--text-secondary);
+    }
+
+    footer a {
+      color: var(--neon-blue);
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+
+    footer a:hover {
+      color: var(--neon-purple);
+    }
+
+    @media (max-width: 768px) {
+      .nav-links {
+        display: none;
+      }
+
+      .workflow-timeline::before {
+        left: 30px;
+      }
+
+      .workflow-step {
+        grid-template-columns: auto 1fr;
+        gap: 1.5rem;
+      }
+
+      .workflow-step:nth-child(even) .step-content:first-child {
+        order: unset;
+        text-align: left;
+      }
+
+      .step-content:first-child {
+        display: none;
+      }
+
+      .hero {
+        padding: 8rem 1.5rem 4rem;
+      }
     }
   </style>
 </head>
 <body>
+  <div class="grid-background"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
   <header>
-    <div class="brand">Transactify</div>
     <nav>
-      <a href="#product">Product</a>
-      <a href="#workflow">Workflow</a>
-      <a href="#proof">Case Studies</a>
-      <a href="marketplace.html">Marketplace</a>
+      <div class="logo">TRANSACTIFY</div>
+      <div class="nav-links">
+        <a href="#features">Protocol</a>
+        <a href="#workflow">Workflow</a>
+        <a href="marketplace.html">Markets</a>
+        <button class="btn btn-primary" onclick="launchApp()">Launch App</button>
+      </div>
     </nav>
-    <div style="display:flex; gap:12px;">
-      <button class="cta secondary" onclick="window.location.href='marketplace.html'">View Listings</button>
-      <button class="cta" onclick="launchApp()">Launch App</button>
-    </div>
   </header>
 
-  <main>
-    <section class="hero">
-      <div>
-        <p style="text-transform:uppercase; letter-spacing:0.25em; color: var(--primary); font-size:13px;">Real Estate • Escrow • Automation</p>
-        <h1>Verified property trades that close themselves.</h1>
-        <p>Transactify blends property verification, auction dynamics, escrow settlement, and agent payouts into one workflow. Inspect proofs, join a live bid, or let our bots release funds the second title transfers.</p>
-        <div style="display:flex; gap:12px; flex-wrap:wrap;">
-          <button class="cta" onclick="launchApp()">Connect Wallet</button>
-          <button class="cta secondary" onclick="window.location.href='dashboard.html'">Open Control Room</button>
-        </div>
-      </div>
-      <div class="hero-mosaic">
-        <div class="property">
-          <h3>123 Main St · NYC</h3>
-          <p>Reserve 85 ETH · Verifier: NYC DCP</p>
-          <p style="margin-top:12px;">Escrow auto-release in 2h once buyer holds title.</p>
-        </div>
-        <div class="property">
-          <h3>987 Lakeshore Dr · Chicago</h3>
-          <p>Buy Now 102 ETH · Commission 3%</p>
-          <p style="margin-top:12px;">Automation bot watching escrow window.</p>
-        </div>
-        <div class="property">
-          <h3>421 Ocean Blvd · Miami</h3>
-          <p>Verified via Miami-Dade API</p>
-          <p style="margin-top:12px;">Oracle evidence: geo.census.gov lookup + PDF deed.</p>
-        </div>
-      </div>
-    </section>
+  <section class="hero">
+    <div class="hero-badge">Oracle-Verified • Trustless • Automated</div>
+    <h1>The Future of<br>Property Exchange</h1>
+    <p class="subtitle">
+      A decentralized protocol for verified real estate trading with autonomous escrow settlement. 
+      No intermediaries. No delays. Pure DeFi architecture.
+    </p>
+    <div class="hero-cta">
+      <button class="btn btn-primary" onclick="launchApp()">Connect Wallet</button>
+      <a href="marketplace.html" class="btn btn-secondary">Explore Markets</a>
+    </div>
 
-    <section class="stats">
-      <div class="stat-card">
-        Properties Verified
-        <span>42</span>
-        <small style="color:var(--muted);">Proofs stored with US Census + municipal APIs</small>
+    <div class="terminal">
+      <div class="terminal-header">
+        <div class="terminal-dot"></div>
+        <div class="terminal-dot"></div>
+        <div class="terminal-dot"></div>
       </div>
-      <div class="stat-card">
-        Auctions Running
-        <span>06</span>
-        <small style="color:var(--muted);">Anti-sniping guard extends final 5 minutes</small>
+      <div class="terminal-body">
+        <div class="terminal-line"><span class="terminal-command">$</span> transactify verify 123-MAIN-ST-NY</div>
+        <div class="terminal-line"><span class="terminal-success">✓</span> Oracle verification complete: US Census API [CONFIRMED]</div>
+        <div class="terminal-line"><span class="terminal-command">$</span> transactify auction --reserve 85 --duration 72h</div>
+        <div class="terminal-line"><span class="terminal-success">✓</span> Listing deployed • Escrow automation enabled • Agent commission: 3%</div>
       </div>
-      <div class="stat-card">
-        Escrow Automated
-        <span>128</span>
-        <small style="color:var(--muted);">ETH released via keeper bot</small>
-      </div>
-      <div class="stat-card">
-        Commission Paid
-        <span>154 ETH</span>
-        <small style="color:var(--muted);">Agent portal with instant withdrawals</small>
-      </div>
-    </section>
+    </div>
+  </section>
 
-    <section id="product">
-      <h2>Platform pillars</h2>
-      <p class="subtitle">Built like a production exchange so our capstone feels ready to launch.</p>
-      <div class="pillars">
-        <div class="pillar">
-          <h3>Registry-grade verification</h3>
-          <p>Our verifier wallet scrapes county APIs + US Census geocoding, leaving on-chain evidence for every listing. No self-reported titles.</p>
-        </div>
-        <div class="pillar">
-          <h3>Dynamic marketplace</h3>
-          <p>English auctions with reserve, min increment, buy-now, and anti-sniping extensions keep bids fair while pending returns protect bidders.</p>
-        </div>
-        <div class="pillar">
-          <h3>Autonomous escrow</h3>
-          <p>Keeper bot calls `completeEscrow` the moment Title Registry shows the buyer as owner. If sellers miss deadlines, refunds trigger automatically.</p>
-        </div>
-        <div class="pillar">
-          <h3>Agent economics</h3>
-          <p>Commission contract accrues earnings per listing and routes payouts with one tap. Agents can bid for themselves or clients on the same UI.</p>
-        </div>
-      </div>
-    </section>
+  <section class="stats">
+    <div class="stat-card">
+      <span class="stat-number">42</span>
+      <div class="stat-label">Verified Properties</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-number">$2.4M</span>
+      <div class="stat-label">Total Volume</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-number">128</span>
+      <div class="stat-label">Escrows Settled</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-number">100%</span>
+      <div class="stat-label">Automated</div>
+    </div>
+  </section>
 
-    <section id="workflow">
-      <h2>Workflow, end-to-end</h2>
-      <p class="subtitle">Every team member follows the same timeline, so there’s no confusion about what happens next.</p>
-      <div class="workflow">
-        <div class="workflow-card">
-          <span>1</span>
-          <h4>Submit property package</h4>
-          <p>Seller uploads metadata + optional assessor links. Transactify emits a verification request to the oracle.</p>
-        </div>
-        <div class="workflow-card">
-          <span>2</span>
-          <h4>Oracle verdict</h4>
-          <p>Verifier wallet cross-checks public data, signs an approval/rejection, and publishes evidence URIs on-chain.</p>
-        </div>
-        <div class="workflow-card">
-          <span>3</span>
-          <h4>List + bid</h4>
-          <p>Sellers choose reserves/min increments or a buy-now. Bidders deposit ETH; outbid users withdraw instantly.</p>
-        </div>
-        <div class="workflow-card">
-          <span>4</span>
-          <h4>Escrow automation</h4>
-          <p>After the timer, the escrow bot monitors title, releases funds to seller/agent, or refunds the buyer if deadlines pass.</p>
-        </div>
+  <section class="section" id="features">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-badge">Protocol Features</div>
+        <h2 class="section-title">Built on Decentralized Infrastructure</h2>
+        <p class="section-subtitle">
+          Enterprise-grade verification meets DeFi automation. Every transaction is transparent, 
+          auditable, and executed by smart contracts.
+        </p>
       </div>
-    </section>
 
-    <section id="proof">
-      <h2>Recent closings</h2>
-      <p class="subtitle">Sample transactions we use during demos (all data stored on-chain).</p>
-      <div class="closings-grid">
-        <div class="closing">
-          <h3>123-MAIN-ST-NY</h3>
-          <p>Winning bid: 88.4 ETH · Commission: 2.6 ETH</p>
-          <p style="color:var(--muted);">Title proof: NYC Department of City Planning parcel 1007. Escrow released 14 minutes after transfer.</p>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <h3 class="feature-title">Oracle Verification</h3>
+          <p class="feature-description">
+            Our verifier wallet queries US Census Bureau and municipal registries. 
+            Every property proof is cryptographically signed and stored on-chain.
+          </p>
         </div>
-        <div class="closing">
-          <h3>221-BAY-LN-TX</h3>
-          <p>Buy Now: 64 ETH · Agent payout: 1.9 ETH</p>
-          <p style="color:var(--muted);">Verified through Harris County API. Escrow keeper triggered refund once seller missed the deadline.</p>
-        </div>
-        <div class="closing">
-          <h3>987-LAKESHORE-DR-IL</h3>
-          <p>Reserve cleared at 102.3 ETH</p>
-          <p style="color:var(--muted);">Automation bot monitored title via TitleRegistry → buyer now stored as owner, funds split instantly.</p>
-        </div>
-      </div>
-    </section>
 
-    <section>
-      <h2>Automation suite</h2>
-      <p class="subtitle">The verifier oracle and escrow keeper run alongside the dApp so you can trust the flow even when everyone logs off.</p>
-      <div class="pillars">
-        <div class="pillar">
-          <h3>Property Verifier</h3>
-          <p>Node script that listens for events, queries US Census + municipal datasets in real time, then writes `recordVerificationResult` from a trusted wallet.</p>
+        <div class="feature-card">
+          <div class="feature-icon">🎯</div>
+          <h3 class="feature-title">Auction Mechanics</h3>
+          <p class="feature-description">
+            English auctions with reserve pricing, anti-sniping extensions, 
+            and optional buy-now. Pending returns safeguard bidders.
+          </p>
         </div>
-        <div class="pillar">
-          <h3>Escrow Keeper</h3>
-          <p>Automation bot tracks each escrow window, calling `completeEscrow` or `claimEscrowRefund` so funds never linger.</p>
-        </div>
-        <div class="pillar">
-          <h3>Observability</h3>
-          <p>Both services log to the console and can be wired into Slack/Webhooks for production observability.</p>
-        </div>
-      </div>
-    </section>
 
-    <section style="text-align:center;">
-      <h2>Ready to transact?</h2>
-      <p class="subtitle">Jump into the read-only marketplace to explore live listings, then unlock the full dashboard once you connect a wallet.</p>
-      <div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">
-        <button class="cta" onclick="launchApp()">Launch Dashboard</button>
-        <button class="cta secondary" onclick="window.location.href='marketplace.html'">See Marketplace Feed</button>
+        <div class="feature-card">
+          <div class="feature-icon">🔐</div>
+          <h3 class="feature-title">Trustless Escrow</h3>
+          <p class="feature-description">
+            Funds lock in smart contracts. Automatic release on title transfer or refunds at deadline.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">💎</div>
+          <h3 class="feature-title">Agent Protocol</h3>
+          <p class="feature-description">
+            Commission contract accrues earnings per listing and routes payouts with one tap.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <h3 class="feature-title">Keeper Network</h3>
+          <p class="feature-description">
+            Automation bot monitors escrow windows and executes settlements.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🛡️</div>
+          <h3 class="feature-title">Audited Contracts</h3>
+          <p class="feature-description">
+            ReentrancyGuard, SafeMath, and structured access controls baked in.
+          </p>
+        </div>
       </div>
-    </section>
-  </main>
+    </div>
+  </section>
+
+  <section class="section" id="workflow">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-badge">Protocol Flow</div>
+        <h2 class="section-title">Four-Step Settlement</h2>
+        <p class="section-subtitle">
+          From oracle verification to automated payout in one seamless protocol interaction.
+        </p>
+      </div>
+
+      <div class="workflow-timeline">
+        <div class="workflow-step">
+          <div class="step-content">
+            <h3 class="step-title">Submit Property Package</h3>
+            <p class="step-description">
+              Seller uploads metadata + assessor links. TitleRegistry emits 
+              VerificationRequested event to oracle network.
+            </p>
+          </div>
+          <div class="step-number">1</div>
+          <div class="step-content"></div>
+        </div>
+
+        <div class="workflow-step">
+          <div class="step-content"></div>
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h3 class="step-title">Oracle Verification</h3>
+            <p class="step-description">
+              Off-chain verifier queries public APIs, signs proof, and writes 
+              recordVerificationResult with evidence URI.
+            </p>
+          </div>
+        </div>
+
+        <div class="workflow-step">
+          <div class="step-content">
+            <h3 class="step-title">Auction Mechanics</h3>
+            <p class="step-description">
+              English auction with configurable parameters. Bids locked in contract, 
+              outbid funds instantly withdrawable. Anti-sniping enabled.
+            </p>
+          </div>
+          <div class="step-number">3</div>
+          <div class="step-content"></div>
+        </div>
+
+        <div class="workflow-step">
+          <div class="step-content"></div>
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <h3 class="step-title">Automated Settlement</h3>
+            <p class="step-description">
+              Keeper bot monitors TitleRegistry. On ownership transfer, 
+              triggers completeEscrow() to split funds between seller and agent. 
+              Deadline miss = automatic refund.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-section">
+    <div class="container">
+      <h2>Deploy Your First Property Contract</h2>
+      <p>Connect your wallet and start trading verified real estate on-chain.</p>
+      <div style="display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap;">
+        <button class="btn btn-primary" onclick="launchApp()">Launch Protocol</button>
+        <a href="marketplace.html" class="btn btn-secondary">View Markets</a>
+      </div>
+    </div>
+  </section>
 
   <footer>
-    © 2024 Transactify · Built for the Fintech & Crypto Lab · <a href="dashboard.html" style="color:#60a5fa;">Open App</a>
+    <p>© 2024 Transactify Protocol • Fintech & Crypto Lab • <a href="dashboard.html">Dashboard</a></p>
   </footer>
 
   <script>
     const { BrowserProvider } = window.ethers;
     async function launchApp() {
       if (!window.ethereum) {
+        alert('Please install MetaMask to interact with the protocol');
         window.location.href = "dashboard.html";
         return;
       }
       try {
         const provider = new BrowserProvider(window.ethereum);
         await provider.send("eth_requestAccounts", []);
+        window.location.href = "dashboard.html";
       } catch (err) {
-        console.warn(err);
+        console.warn('Wallet connection failed:', err);
+        window.location.href = "dashboard.html";
       }
-      window.location.href = "dashboard.html";
     }
   </script>
 </body>

@@ -2,286 +2,470 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Transactify Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>dApp • Transactify Protocol</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.0/dist/ethers.umd.min.js"></script>
   <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
-      color-scheme: light;
-      --primary: #0a4fd5;
-      --secondary: #0f172a;
-      --muted: #94a3b8;
-      --card: #ffffff;
-      --bg: #eef2ff;
-      --outline: #e2e8f0;
+      --neon-blue: #00d4ff;
+      --neon-purple: #a259ff;
+      --neon-green: #00ff88;
+      --neon-red: #ff0055;
+      --dark-bg: #0a0e27;
+      --darker-bg: #050814;
+      --card-bg: rgba(17, 25, 40, 0.75);
+      --border: rgba(0, 212, 255, 0.2);
+      --text-primary: #e2e8f0;
+      --text-secondary: #94a3b8;
+      --glass: rgba(255, 255, 255, 0.03);
     }
-    * { box-sizing: border-box; }
+
     body {
-      margin: 0;
-      font-family: 'Space Grotesk', Arial, sans-serif;
-      background: var(--bg);
-      color: var(--secondary);
+      font-family: 'Inter', sans-serif;
+      background: var(--darker-bg);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+      overflow-x: hidden;
     }
+
+    .grid-background {
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+      background-size: 45px 45px;
+      animation: drift 30s linear infinite;
+      z-index: 0;
+    }
+
+    @keyframes drift {
+      from { transform: translate(0,0); }
+      to { transform: translate(45px,45px); }
+    }
+
     header {
-      padding: 24px 4vw 16px;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: rgba(5, 8, 20, 0.9);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    nav {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 1rem 2rem;
       display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
       justify-content: space-between;
       align-items: center;
     }
-    .brand {
-      font-size: 30px;
-      font-weight: 600;
-      color: var(--primary);
-      letter-spacing: -0.5px;
+
+    .logo {
+      font-family: 'Space Mono', monospace;
+      letter-spacing: 2px;
+      color: var(--neon-blue);
+      font-size: 1.4rem;
     }
-    header button {
-      border: none;
-      border-radius: 10px;
-      padding: 10px 16px;
-      font-size: 14px;
-      cursor: pointer;
-      background: rgba(10,79,213,.12);
-      color: var(--primary);
-    }
-    main {
-      max-width: 1200px;
-      margin: 0 auto 60px;
-      padding: 0 4vw 40px;
+
+    .wallet-info {
       display: flex;
-      flex-direction: column;
-      gap: 24px;
-    }
-    .panel {
-      background: var(--card);
-      border-radius: 20px;
-      padding: 24px;
-      box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
-    }
-    .hero-panel {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 20px;
+      flex-wrap: wrap;
+      gap: 0.6rem;
       align-items: center;
     }
-    .hero-panel h1 {
-      margin: 0 0 10px;
-      font-size: 36px;
+
+    .wallet-chip {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.5rem 0.9rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.85rem;
+      color: var(--neon-blue);
+      background: rgba(0, 0, 0, 0.3);
     }
-    .hero-panel p { color: var(--muted); margin: 0; }
-    .stats-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-      gap: 12px;
-      margin-top: 18px;
+
+    .generated-id {
+      border: 1px dashed var(--border);
+      padding: 0.5rem 0.75rem;
+      border-radius: 12px;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--neon-blue);
+      background: rgba(0,0,0,0.2);
+      margin-bottom: 0.5rem;
+      word-break: break-all;
     }
-    .stat {
-      background: rgba(10,79,213,.07);
-      border-radius: 16px;
-      padding: 14px;
-    }
-    .stat span {
-      display: block;
-      font-size: 28px;
-      font-weight: 600;
-      color: var(--primary);
-    }
-    .workflow-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 20px;
-    }
-    .workflow-card {
-      border: 1px solid var(--outline);
-      border-radius: 18px;
-      padding: 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .workflow-card h3 {
-      margin: 0;
-      font-size: 18px;
-    }
-    label {
-      font-size: 13px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--muted);
-    }
-    input {
-      width: 100%;
-      border: 1px solid var(--outline);
-      border-radius: 10px;
-      padding: 12px;
-      font-size: 15px;
-      font-family: inherit;
-      background: #f8fbff;
-    }
+
     .btn {
       border: none;
-      border-radius: 11px;
-      padding: 11px 16px;
-      font-size: 14px;
+      border-radius: 10px;
+      padding: 0.7rem 1.2rem;
+      font-size: 0.85rem;
       font-weight: 600;
       cursor: pointer;
-      background: var(--primary);
-      color: #fff;
+      transition: all 0.3s;
+      font-family: 'Space Mono', monospace;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
-    .btn.outline {
-      background: transparent;
-      color: var(--primary);
-      border: 1px solid rgba(10,79,213,.3);
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+      color: white;
+      border: 1px solid rgba(255,255,255,0.15);
+      box-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
     }
-    .section-title {
-      margin: 0 0 14px;
-      font-size: 24px;
+
+    .btn-secondary {
+      background: var(--glass);
+      color: var(--neon-blue);
+      border: 1px solid var(--border);
     }
-    .section-subtitle {
-      margin: 0 0 20px;
-      color: var(--muted);
-      font-size: 15px;
+
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+      position: relative;
+      z-index: 2;
     }
+
+    .panel {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 1.8rem;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.45);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+
+    .stat-card {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(0,212,255,0.15);
+      border-radius: 14px;
+      padding: 1.1rem;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      font-family: 'Space Mono', monospace;
+      color: var(--neon-blue);
+    }
+
+    .stepper {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .step-card {
+      position: relative;
+      padding: 1.5rem;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,0.35);
+      backdrop-filter: blur(12px);
+      min-height: 330px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+
+    .step-card.locked {
+      opacity: 0.35;
+      pointer-events: none;
+    }
+
+    .lock-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+      color: var(--text-secondary);
+      font-family: 'Space Mono', monospace;
+      font-size: 0.85rem;
+    }
+
+    .step-head {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .step-badge {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+      color: white;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Space Mono', monospace;
+      box-shadow: 0 0 25px rgba(0,212,255,0.35);
+    }
+
+    .step-title {
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--text-secondary);
+    }
+
+    input {
+      width: 100%;
+      padding: 0.7rem;
+      border-radius: 10px;
+      border: 1px solid rgba(0,212,255,0.25);
+      background: rgba(255,255,255,0.03);
+      color: var(--text-primary);
+      font-family: 'Space Mono', monospace;
+      font-size: 0.9rem;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--neon-blue);
+      box-shadow: 0 0 20px rgba(0,212,255,0.2);
+    }
+
+    .info-box {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(0,212,255,0.2);
+      border-radius: 12px;
+      padding: 0.9rem;
+      font-size: 0.8rem;
+      font-family: 'Space Mono', monospace;
+      color: #c7d2fe;
+      flex: 1;
+    }
+
     .listings-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 12px;
       flex-wrap: wrap;
+      gap: 1rem;
     }
+
     .listings-grid {
       display: grid;
-      gap: 18px;
       grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.2rem;
+      margin-top: 1.2rem;
     }
+
     .listing-card {
-      border: 1px solid var(--outline);
-      border-radius: 18px;
-      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.3rem;
+      background: rgba(0,0,0,0.4);
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 0.6rem;
     }
+
     .pill {
       display: inline-flex;
-      padding: 4px 12px;
+      padding: 0.2rem 0.8rem;
       border-radius: 999px;
-      font-size: 13px;
+      font-size: 0.75rem;
       color: #fff;
     }
     .pill.verified { background: #22c55e; }
     .pill.pending { background: #f59e0b; }
     .pill.rejected { background: #ef4444; }
+
     .listing-actions {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 6px;
+      gap: 0.4rem;
     }
     .listing-actions button {
-      border: none;
+      background: rgba(0,212,255,0.1);
+      border: 1px solid rgba(0,212,255,0.2);
+      color: var(--neon-blue);
+      padding: 0.4rem 0.8rem;
       border-radius: 999px;
-      padding: 8px 14px;
-      font-size: 13px;
+      font-size: 0.7rem;
       cursor: pointer;
-      background: rgba(10,79,213,.12);
-      color: var(--primary);
+      font-family: 'Space Mono', monospace;
     }
+
     .log-panel {
-      background: #10152b;
-      color: #9fb5ff;
-      font-family: "Space Grotesk", monospace;
-      padding: 18px;
-      border-radius: 18px;
-      height: 160px;
+      background: #040a1b;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1rem;
+      height: 180px;
       overflow-y: auto;
+      font-family: 'Space Mono', monospace;
+      color: #a5b4fc;
+      font-size: 0.8rem;
+    }
+
+    @media (max-width: 768px) {
+      main { padding: 1.2rem; }
+      nav { flex-direction: column; }
+      .wallet-info { justify-content: flex-start; }
     }
   </style>
 </head>
 <body>
+  <div class="grid-background"></div>
+
   <header>
-    <div class="brand">Transactify</div>
-    <div style="display:flex; gap:10px;">
-      <button onclick="window.location.href='index.html'">Landing</button>
-      <button onclick="window.location.href='marketplace.html'">Marketplace</button>
-    </div>
+    <nav>
+      <div class="logo">TRANSACTIFY</div>
+      <div class="wallet-info">
+        <div class="wallet-chip" id="walletAddress">NOT CONNECTED</div>
+        <button class="btn btn-secondary" onclick="window.location.href='index.html'">← Protocol</button>
+        <button class="btn btn-secondary" onclick="window.location.href='marketplace.html'">Markets</button>
+        <button class="btn btn-primary" id="connectBtn" onclick="connectWallet()">Connect</button>
+      </div>
+    </nav>
   </header>
 
   <main>
-    <section class="panel hero-panel">
-      <div>
-        <p style="text-transform:uppercase; letter-spacing:0.18em; font-size:12px; color: var(--primary);">Control Room</p>
-        <h1>Launch, monitor, settle.</h1>
-        <p>Connect your wallet to manage verified properties, listings, commissions, and escrow automation. We only surface the actions relevant to your current phase.</p>
-        <button class="btn" id="connectBtn" onclick="connectWallet()">🔗 Connect Wallet</button>
-      </div>
-      <div>
-        <div class="stats-row">
-          <div class="stat">
-            Wallet
-            <span id="walletAddress">Not connected</span>
-          </div>
-          <div class="stat">
-            Chain
-            <span id="chainId">-</span>
-          </div>
-          <div class="stat">
-            Listings
-            <span id="metricListings">0</span>
-          </div>
-          <div class="stat">
-            Commission bps
-            <span id="metricCommission">-</span>
-          </div>
-          <div class="stat">
-            Anti-snipe
-            <span id="metricWindow">-</span>
-          </div>
+    <section class="panel">
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Chain ID</div>
+          <div class="stat-value" id="chainId">-</div>
+          <div class="stat-label" style="font-size:0.65rem; color:var(--text-secondary);">Network</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Listings</div>
+          <div class="stat-value" id="totalListings">0</div>
+          <div class="stat-label" style="font-size:0.65rem; color:var(--text-secondary);">Total deployed</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Commission</div>
+          <div class="stat-value" id="commissionRate">-</div>
+          <div class="stat-label" style="font-size:0.65rem; color:var(--text-secondary);">Basis points</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Anti-Snipe</div>
+          <div class="stat-value" id="antiSnipe">-</div>
+          <div class="stat-label" style="font-size:0.65rem; color:var(--text-secondary);">Protection</div>
         </div>
       </div>
     </section>
 
     <section class="panel">
-      <div class="workflow-grid">
-        <div class="workflow-card">
-          <h3>Step 1 · Verify Property</h3>
-          <label>Property Identifier</label>
-          <input id="propertyId" placeholder="e.g. 123-MAIN-ST-NY">
-          <label>Metadata / Evidence URI</label>
-          <input id="propertyMetadata" placeholder="https://docs.transactify.xyz/property.pdf">
-          <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            <button class="btn" onclick="registerProperty()">Request Verification</button>
-            <button class="btn outline" onclick="requestReverification()">Re-run Oracle</button>
-            <button class="btn outline" onclick="loadPropertyInfo()">View Status</button>
+      <h2 style="margin-bottom:1rem; letter-spacing:2px; text-transform:uppercase; font-size:0.9rem; color:var(--text-secondary);">Guided Workflow</h2>
+      <div class="stepper">
+        <div class="step-card" data-step="1">
+          <div class="step-head">
+            <div class="step-badge">1</div>
+            <div class="step-title">Register Property</div>
           </div>
-          <div class="log-panel" style="height:110px; margin-top:10px; background:#eef2ff; color:#1f2a44;" id="propertyStatus">Awaiting selection…</div>
+          <p style="font-size:0.85rem; color:var(--text-secondary);">Provide the full address so the oracle can validate it against public datasets.</p>
+          <div class="generated-id" id="derivedPropertyId">Enter address to generate property ID</div>
+          <label>Street Address</label>
+          <input id="propertyStreet" placeholder="123 Main St">
+          <label>City</label>
+          <input id="propertyCity" placeholder="City">
+          <label>State / Province</label>
+          <input id="propertyState" placeholder="State">
+          <label>Postal Code</label>
+          <input id="propertyPostal" placeholder="ZIP or postal code">
+          <label>Country</label>
+          <input id="propertyCountry" placeholder="Country">
+          <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="registerProperty()">Submit</button>
+            <button class="btn btn-secondary" onclick="loadPropertyInfo()">Status</button>
+          </div>
+          <div class="info-box" id="propertyStatus">Oracle will verify ownership via Census + municipal APIs.</div>
         </div>
-        <div class="workflow-card">
-          <h3>Step 2 · Publish Listing</h3>
+
+        <div class="step-card locked" data-step="2">
+          <div class="lock-overlay">Complete step 1 to unlock</div>
+          <div class="step-head">
+            <div class="step-badge">2</div>
+            <div class="step-title">Deploy Listing</div>
+          </div>
+          <p style="font-size:0.85rem; color:var(--text-secondary);">Define reserve, increments, duration, and optional buy-now price.</p>
           <label>Property ID</label>
-          <input id="listingPropertyId" placeholder="Must be verified">
-          <label>Agent Wallet (optional)</label>
-          <input id="listingAgent" placeholder="0xAgentWallet">
-          <label>Reserve Price (ETH)</label>
-          <input id="listingReserve" type="number" min="0" step="0.01" placeholder="80">
+          <input id="listingPropertyId" placeholder="Verified property">
+          <label>Reserve (ETH)</label>
+          <input id="listingReserve" type="number" step="0.01" placeholder="80">
           <label>Min Increment (ETH)</label>
-          <input id="listingIncrement" type="number" min="0.01" step="0.01" placeholder="0.5">
-          <label>Optional Buy Now (ETH)</label>
-          <input id="listingBuyNow" type="number" min="0" step="0.01" placeholder="Leave blank to disable">
-          <label>Bidding Duration (hours)</label>
-          <input id="listingDuration" type="number" min="1" step="1" placeholder="72">
-          <button class="btn" style="margin-top:8px;" onclick="createListing()">Launch Listing</button>
+          <input id="listingIncrement" type="number" step="0.01" placeholder="0.5">
+          <label>Buy Now (ETH)</label>
+          <input id="listingBuyNow" type="number" step="0.01" placeholder="Optional">
+          <label>Duration (hrs)</label>
+          <input id="listingDuration" type="number" step="1" placeholder="72">
+          <label>Agent Wallet (optional)</label>
+          <input id="listingAgent" placeholder="0xAgent...">
+          <button class="btn btn-primary" onclick="createListing()">Launch Listing</button>
         </div>
-        <div class="workflow-card" id="commission">
-          <h3>Step 3 · Agent Center</h3>
+
+        <div class="step-card locked" data-step="3">
+          <div class="lock-overlay">Complete step 2 to unlock</div>
+          <div class="step-head">
+            <div class="step-badge">3</div>
+            <div class="step-title">Agent Center</div>
+          </div>
+          <p style="font-size:0.85rem; color:var(--text-secondary);">Monitor commissions in real time once escrow settles.</p>
           <label>Agent Address</label>
           <input id="agentLookup" placeholder="0x...">
-          <div style="display:flex; gap:10px; margin-top:12px;">
-            <button class="btn outline" onclick="checkCommission()">Check Balance</button>
-            <button class="btn" onclick="withdrawCommission()">Withdraw</button>
+          <div style="display:flex; gap:0.6rem; margin-top:0.8rem;">
+            <button class="btn btn-secondary" onclick="checkCommission()">Check</button>
+            <button class="btn btn-primary" onclick="withdrawCommission()">Withdraw</button>
           </div>
-          <div class="log-panel" style="height:110px; margin-top:12px; background:#eef2ff; color:#1f2a44;" id="commissionStatus">Connect a wallet to view commissions.</div>
+          <div class="info-box" id="commissionStatus">Commission auto-accrues when escrow completes.</div>
         </div>
       </div>
     </section>
@@ -289,10 +473,10 @@
     <section class="panel">
       <div class="listings-header">
         <div>
-          <h2 class="section-title">Live Listings</h2>
-          <p class="section-subtitle">Only the actions relevant to the current state are shown. Auctions auto-extend if bids arrive near the end.</p>
+          <h3 style="margin-bottom:0.2rem; font-size:1.2rem; text-transform:uppercase; letter-spacing:2px;">Live Listings</h3>
+          <p style="color:var(--text-secondary); font-size:0.85rem;">Only the actions relevant to each state are shown.</p>
         </div>
-        <button class="btn outline" onclick="refreshListings()">Refresh</button>
+        <button class="btn btn-secondary" onclick="refreshListings()">Refresh</button>
       </div>
       <div id="listings" class="listings-grid">
         <div class="listing-card">Connect your wallet to load listings.</div>
@@ -300,8 +484,7 @@
     </section>
 
     <section class="panel">
-      <h2 class="section-title">Activity Feed</h2>
-      <p class="section-subtitle">Recent contract interactions and RPC responses.</p>
+      <h3 style="margin-bottom:0.6rem; text-transform:uppercase; letter-spacing:2px; font-size:0.95rem;">Activity Feed</h3>
       <div id="log" class="log-panel">Ready…</div>
     </section>
   </main>
@@ -310,15 +493,15 @@
     const ethersLib = window.ethers;
 
     const CONTRACTS = {
-      titleRegistry: "0xYourTitleRegistryAddress",
-      marketplace: "0xYourMarketplaceAddress",
-      agentCommission: "0xYourAgentCommissionAddress"
+      titleRegistry: "0xFbeB370efc9087C50923C4EacA090a534216295f",
+      marketplace: "0xfe1C6ce96E98a9Ff5e146846B3a65edB3F5163cB",
+      agentCommission: "0xd2134C54971114178fD737fBec3d10412058E4ea"
     };
 
     const titleABI = [
-      "function registerProperty(string,string) external",
+      "function registerProperty(string,string,string,string,string,string) external",
       "function requestReverification(string) external",
-      "function propertyInfo(string) external view returns(address,string,uint8,string,bool)",
+      "function propertyInfo(string) external view returns(address,uint8,string,string,string,string,string,string,bool)",
       "function isVerified(string) external view returns(bool)",
       "function verifyOwnership(string,address) external view returns(bool)"
     ];
@@ -333,7 +516,7 @@
       "function claimEscrowRefund(uint256) external",
       "function totalListings() external view returns(uint256)",
       "function previewEscrowAction(uint256) external view returns(bool,bool,uint256)",
-      "function getListing(uint256) external view returns(string,address,address,uint64,uint64,uint64,uint128,uint128,uint128,uint256,address,uint8)",
+      "function getListing(uint256) external view returns((string,address,address,uint64,uint64,uint64,uint128,uint128,uint128,uint256,address,uint8,bool))",
       "function pendingReturns(uint256,address) external view returns(uint256)",
       "function antiSnipingWindow() external view returns(uint256)",
       "function antiSnipingExtension() external view returns(uint256)"
@@ -346,16 +529,31 @@
       "function recordCommission(address,uint256) external payable"
     ];
 
-    const STATE_LABELS = ["Auction","Awaiting Title Transfer","Completed","Refunded","Cancelled"];
     const VERIFY_LABELS = ["None","Pending","Verified","Rejected"];
+    const STATE_LABELS = ["Auction","Awaiting Title Transfer","Completed","Refunded","Cancelled"];
 
     let provider, signer, registry, marketplace, commissionContract, currentAccount;
+    let completedSteps = Number(localStorage.getItem('transactifySteps') || 0);
 
     function log(message) {
       const el = document.getElementById("log");
       const timestamp = new Date().toLocaleTimeString();
       el.textContent += `\n[${timestamp}] ${message}`;
       el.scrollTop = el.scrollHeight;
+    }
+
+    function formatError(err) {
+      if (!err) return "Unknown error";
+      if (err.shortMessage) return err.shortMessage;
+      if (err.info?.error?.message) return err.info.error.message;
+      if (err.error?.message) return err.error.message;
+      if (err.data?.message) return err.data.message;
+      if (typeof err.message === "string") return err.message;
+      try {
+        return JSON.stringify(err);
+      } catch {
+        return String(err);
+      }
     }
 
     function short(addr) {
@@ -376,6 +574,35 @@
       return parts.join(" ");
     }
 
+    function updateStepLocks() {
+      document.querySelectorAll('.step-card').forEach(card => {
+        const step = Number(card.dataset.step);
+        if (step <= completedSteps + 1) {
+          card.classList.remove('locked');
+          const overlay = card.querySelector('.lock-overlay');
+          if (overlay) overlay.remove();
+        } else {
+          if (!card.classList.contains('locked')) {
+            const overlay = document.createElement('div');
+            overlay.className = 'lock-overlay';
+            overlay.textContent = `Complete step ${step - 1} to unlock`;
+            card.appendChild(overlay);
+          }
+          card.classList.add('locked');
+        }
+      });
+      localStorage.setItem('transactifySteps', completedSteps);
+    }
+
+    function advanceStep(step) {
+      if (step > completedSteps) {
+        completedSteps = step;
+        updateStepLocks();
+      }
+    }
+
+    updateStepLocks();
+
     async function connectWallet() {
       if (!window.ethereum) {
         alert("Install MetaMask to continue.");
@@ -395,62 +622,161 @@
       log(`Wallet connected: ${currentAccount}`);
 
       try {
+        const total = Number(await marketplace.totalListings());
+        document.getElementById("totalListings").textContent = total;
         const bps = await commissionContract.commissionBps();
+        document.getElementById("commissionRate").textContent = bps;
         const windowSeconds = Number(await marketplace.antiSnipingWindow());
         const extensionSeconds = Number(await marketplace.antiSnipingExtension());
-        document.getElementById("metricCommission").textContent = Number(bps);
-        document.getElementById("metricWindow").textContent =
+        document.getElementById("antiSnipe").textContent =
           windowSeconds > 0 ? `${windowSeconds/60}m / +${extensionSeconds/60}m` : "Off";
       } catch (err) {
-        log(`Metric read failed: ${err.shortMessage || err.message}`);
+        log(`Metric read failed: ${formatError(err)}`);
       }
 
       refreshListings();
     }
 
+    function normalizeSegment(value) {
+      if (!value) return "";
+      return value
+        .toString()
+        .trim()
+        .toUpperCase()
+        .replace(/[^A-Z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+    }
+
+    function derivePropertyId() {
+      const parts = [
+        normalizeSegment(document.getElementById("propertyStreet").value),
+        normalizeSegment(document.getElementById("propertyCity").value),
+        normalizeSegment(document.getElementById("propertyState").value),
+        normalizeSegment(document.getElementById("propertyPostal").value),
+        normalizeSegment(document.getElementById("propertyCountry").value)
+      ].filter(Boolean);
+      if (!parts.length) return "";
+      return parts.join("-").replace(/-+/g, "-");
+    }
+
+    function updateDerivedPropertyId() {
+      const id = derivePropertyId();
+      const el = document.getElementById("derivedPropertyId");
+      if (id) {
+        el.textContent = id;
+        const listingField = document.getElementById("listingPropertyId");
+        if (listingField && !listingField.value) {
+          listingField.value = id;
+        }
+      } else {
+        el.textContent = "Enter address to generate property ID";
+      }
+    }
+
+    const ADDRESS_FIELDS = [
+      "propertyStreet",
+      "propertyCity",
+      "propertyState",
+      "propertyPostal",
+      "propertyCountry"
+    ];
+
+    function initAddressDerivation() {
+      ADDRESS_FIELDS.forEach((fieldId) => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+          field.addEventListener("input", updateDerivedPropertyId);
+        } else {
+          console.warn(`Missing address field: ${fieldId}`);
+        }
+      });
+      updateDerivedPropertyId();
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", initAddressDerivation);
+    } else {
+      initAddressDerivation();
+    }
+
     async function registerProperty() {
       try {
-        const id = document.getElementById("propertyId").value.trim();
-        const metadata = document.getElementById("propertyMetadata").value.trim();
-        if (!id || !metadata) return alert("Provide ID + metadata");
-        const tx = await registry.registerProperty(id, metadata);
+        if (!registry) {
+          return alert("Connect your wallet before registering a property.");
+        }
+        const id = derivePropertyId();
+        const street = document.getElementById("propertyStreet").value.trim();
+        const city = document.getElementById("propertyCity").value.trim();
+        const state = document.getElementById("propertyState").value.trim();
+        const postal = document.getElementById("propertyPostal").value.trim();
+        const country = document.getElementById("propertyCountry").value.trim();
+        if (!street || !city || !state || !postal || !country) {
+          return alert("Fill in every address field before submitting.");
+        }
+        if (!id) {
+          return alert("Unable to derive property ID from address. Double-check inputs.");
+        }
+        document.getElementById("propertyStatus").textContent = "Submitting to registry…";
+        log(`Submitting property ${id} for verification…`);
+        if (registry.simulate?.registerProperty) {
+          try {
+            await registry.simulate.registerProperty(id, street, city, state, postal, country);
+          } catch (simulationErr) {
+            console.error("registerProperty simulation failed", simulationErr);
+            document.getElementById("propertyStatus").textContent = formatError(simulationErr);
+            log(formatError(simulationErr) || "registerProperty simulation failed");
+            return;
+          }
+        }
+        const tx = await registry.registerProperty(id, street, city, state, postal, country);
         log(`registerProperty tx: ${tx.hash}`);
         await tx.wait();
         log(`Property ${id} submitted for verification.`);
-        await loadPropertyInfo();
+        document.getElementById("listingPropertyId").value = id;
+        advanceStep(1);
+        await loadPropertyInfo(id);
       } catch (err) {
-        log(err.shortMessage || err.message);
+        console.error("registerProperty failed", err);
+        log(formatError(err));
       }
     }
 
-    async function requestReverification() {
+    async function loadPropertyInfo(explicitId) {
       try {
-        const id = document.getElementById("propertyId").value.trim();
-        if (!id) return alert("Property ID required.");
-        const tx = await registry.requestReverification(id);
-        log(`requestReverification tx: ${tx.hash}`);
-        await tx.wait();
-        log(`Property ${id} set back to pending.`);
-        await loadPropertyInfo();
-      } catch (err) {
-        log(err.shortMessage || err.message);
-      }
-    }
-
-    async function loadPropertyInfo() {
-      try {
-        const id = document.getElementById("propertyId").value.trim();
-        if (!id) return;
+        if (!registry) {
+          document.getElementById("propertyStatus").textContent = "Connect wallet to query registry.";
+          return;
+        }
+        const id = explicitId?.trim() || derivePropertyId();
+        if (!id) {
+          document.getElementById("propertyStatus").textContent = "Enter address data first.";
+          return;
+        }
         const info = await registry.propertyInfo(id);
+        const owner = info[0];
+        const status = Number(info[1]);
+        const evidence = info[2];
+        const street = info[3];
+        const city = info[4];
+        const state = info[5];
+        const postal = info[6];
+        const country = info[7];
+        const exists = info[8];
+        if (!exists) {
+          document.getElementById("propertyStatus").textContent = "Property not registered yet.";
+          return;
+        }
+        document.getElementById("listingPropertyId").value = id;
+        const location = `${street || "-"}, ${city || "-"}, ${state || "-"} ${postal || ""}, ${country || "-"}`;
         document.getElementById("propertyStatus").innerHTML = `
-          <strong>${id}</strong><br>
-          Owner: ${short(info[0])}<br>
-          Status: ${VERIFY_LABELS[Number(info[2])]}<br>
-          Metadata: ${info[1] || "n/a"}<br>
-          Evidence: ${info[3] || "pending"}
+          <strong>Property ID:</strong> ${id}<br>
+          <strong>Owner:</strong> ${short(owner)}<br>
+          <strong>Status:</strong> ${VERIFY_LABELS[status]}<br>
+          <strong>Location:</strong> ${location}<br>
+          <strong>Evidence:</strong> ${evidence || "pending"}
         `;
       } catch (err) {
-        document.getElementById("propertyStatus").textContent = err.shortMessage || err.message;
+        document.getElementById("propertyStatus").textContent = formatError(err);
       }
     }
 
@@ -476,10 +802,11 @@
         );
         log(`createListing tx: ${tx.hash}`);
         await tx.wait();
-        log(`Listing created for ${propertyId}`);
+        log(`Listing launched for ${propertyId}`);
+        advanceStep(2);
         refreshListings();
       } catch (err) {
-        log(err.shortMessage || err.message);
+        log(formatError(err));
       }
     }
 
@@ -496,7 +823,7 @@
         await tx.wait();
         refreshListings();
       } catch (err) {
-        log(err.shortMessage || err.message);
+        log(formatError(err));
       }
     }
 
@@ -511,7 +838,7 @@
         await tx.wait();
         refreshListings();
       } catch (err) {
-        log(err.shortMessage || err.message);
+        log(formatError(err));
       }
     }
 
@@ -522,7 +849,7 @@
         await tx.wait();
         refreshListings();
       } catch (err) {
-        log(err.shortMessage || err.message);
+        log(formatError(err));
       }
     }
 
@@ -533,7 +860,7 @@
         await tx.wait();
         refreshListings();
       } catch (err) {
-        log(err.shortMessage || err.message);
+        log(formatError(err));
       }
     }
 
@@ -544,7 +871,7 @@
         await tx.wait();
         refreshListings();
       } catch (err) {
-        log(err.shortMessage || err.message);
+        log(formatError(err));
       }
     }
 
@@ -555,7 +882,7 @@
         await tx.wait();
         refreshListings();
       } catch (err) {
-        log(err.shortMessage || err.message);
+        log(formatError(err));
       }
     }
 
@@ -564,10 +891,9 @@
         const agent = document.getElementById("agentLookup").value.trim();
         if (!agent) return alert("Agent address required.");
         const bal = await commissionContract.getCommissionBalance(agent);
-        document.getElementById("commissionStatus").textContent =
-          `${ethersLib.formatEther(bal)} ETH available for ${short(agent)}`;
+        document.getElementById("commissionStatus").textContent = `${ethersLib.formatEther(bal)} ETH available for ${short(agent)}`;
       } catch (err) {
-        document.getElementById("commissionStatus").textContent = err.shortMessage || err.message;
+        document.getElementById("commissionStatus").textContent = formatError(err);
       }
     }
 
@@ -578,33 +904,35 @@
         const tx = await commissionContract.releaseCommission(agent);
         log(`releaseCommission tx: ${tx.hash}`);
         await tx.wait();
+        document.getElementById("commissionStatus").textContent = "Commission released.";
+        advanceStep(3);
         checkCommission();
       } catch (err) {
-        log(err.shortMessage || err.message);
+        log(formatError(err));
       }
     }
 
     function actionsForState(listing) {
       const actions = [];
       if (listing.state === 0) {
-        actions.push(`<div class="inline-input" style="display:flex; gap:8px; align-items:center;">
-          <input id="bid-${listing.id}" type="number" min="0" step="0.01" placeholder="Bid (ETH)">
-          <button class="btn outline" onclick="placeBid(${listing.id})">Bid</button>
+        actions.push(`<div style="display:flex; gap:0.4rem; align-items:center;">
+          <input id="bid-${listing.id}" type="number" min="0" step="0.01" placeholder="Bid (ETH)" style="flex:1; padding:0.4rem 0.7rem; font-size:0.75rem;">
+          <button onclick="placeBid(${listing.id})">Bid</button>
         </div>`);
         if (listing.buyNowPrice > 0n) {
           actions.push(`<button onclick="buyNow(${listing.id}, '${listing.buyNowPrice}')">Buy Now (${ethersLib.formatEther(listing.buyNowPrice)} ETH)</button>`);
         }
-        actions.push(`<button onclick="finalizeAuction(${listing.id})">Finalize (after timer)</button>`);
+        actions.push(`<button onclick="finalizeAuction(${listing.id})">Finalize</button>`);
         if (listing.highestBid === 0n) {
-          actions.push(`<button onclick="cancelListing(${listing.id})">Cancel Listing</button>`);
+          actions.push(`<button onclick="cancelListing(${listing.id})">Cancel</button>`);
         }
       } else if (listing.state === 1) {
-        actions.push(`<button onclick="completeEscrow(${listing.id})">Release Funds</button>`);
-        actions.push(`<button onclick="claimRefund(${listing.id})">Trigger Refund</button>`);
+        actions.push(`<button onclick="completeEscrow(${listing.id})">Release</button>`);
+        actions.push(`<button onclick="claimRefund(${listing.id})">Refund</button>`);
       } else if (listing.state === 2) {
-        actions.push(`<span style="color:#22c55e;">Escrow complete</span>`);
+        actions.push(`<span style="color:#22c55e; font-size:0.75rem;">Escrow complete</span>`);
       } else if (listing.state === 3) {
-        actions.push(`<span style="color:#ef4444;">Refunded to buyer</span>`);
+        actions.push(`<span style="color:#ef4444; font-size:0.75rem;">Buyer refunded</span>`);
       }
       if (listing.pendingWithdraw > 0n) {
         actions.push(`<button onclick="withdrawBid(${listing.id})">Withdraw ${ethersLib.formatEther(listing.pendingWithdraw)} ETH</button>`);
@@ -618,7 +946,7 @@
       container.innerHTML = "<div class='listing-card'>Loading listings…</div>";
       try {
         const total = Number(await marketplace.totalListings());
-        document.getElementById("metricListings").textContent = total;
+        document.getElementById("totalListings").textContent = total;
         if (!total) {
           container.innerHTML = "<div class='listing-card'>No listings yet. Create one above.</div>";
           return;
@@ -633,7 +961,6 @@
               propertyId: data[0],
               seller: data[1],
               agent: data[2],
-              createdAt: Number(data[3]),
               biddingEnd: Number(data[4]),
               escrowDeadline: Number(data[5]),
               reservePrice: data[6],
@@ -641,53 +968,98 @@
               buyNowPrice: data[8],
               highestBid: data[9],
               highestBidder: data[10],
-              state: Number(data[11])
+              state: Number(data[11]),
+              exists: Boolean(data[12])
             };
-            if (!listing.propertyId) continue;
+            if (!listing.propertyId || !listing.exists) continue;
             const propertyInfo = await registry.propertyInfo(listing.propertyId);
-            const verification = Number(propertyInfo[2]);
+            if (!propertyInfo[8]) continue;
+            const verification = Number(propertyInfo[1]);
+            const location = `${propertyInfo[3] || ""}, ${propertyInfo[4] || ""}, ${propertyInfo[5] || ""} ${propertyInfo[6] || ""}, ${propertyInfo[7] || ""}`.replace(/\s+,/g, ",").replace(/,\s+/g, ", ");
             const verifiedClass = verification === 2 ? "pill verified" : verification === 1 ? "pill pending" : "pill rejected";
-            const pendingAmount = currentAccount ? await marketplace.pendingReturns(i, currentAccount) : 0n;
+            let pendingAmount = 0n;
+            if (currentAccount) {
+              try {
+                pendingAmount = await marketplace.pendingReturns(i, currentAccount);
+              } catch (pendingErr) {
+                console.warn(`pendingReturns failed for listing ${i}`, pendingErr);
+                log(`Pending returns query failed for #${i}: ${formatError(pendingErr)}`);
+              }
+            }
             listing.pendingWithdraw = pendingAmount;
-            let timeline = listing.biddingEnd > now ? `Ends in ${countdown(listing.biddingEnd - now)}` : "Auction ended";
+            const timeline = listing.biddingEnd > now ? `Ends in ${countdown(listing.biddingEnd - now)}` : "Auction ended";
             let automation = "Escrow inactive";
             if (listing.state === 1) {
-              const [canRelease, canRefund, remaining] = await marketplace.previewEscrowAction(i);
-              automation = canRelease ? "Ready to release" : canRefund ? "Deadline passed" : `Waiting (${countdown(remaining)})`;
+              try {
+                const [canRelease, canRefund, remaining] = await marketplace.previewEscrowAction(i);
+                automation = canRelease ? "Ready to release" : canRefund ? "Deadline passed" : `Waiting (${countdown(remaining)})`;
+              } catch (previewErr) {
+                console.warn(`previewEscrowAction failed for listing ${i}`, previewErr);
+                log(`Escrow preview failed for #${i}: ${formatError(previewErr)}`);
+              }
             } else if (listing.state === 2) {
               automation = "Settlement complete";
             } else if (listing.state === 3) {
               automation = "Buyer refunded";
-            } else if (listing.state === 4) {
-              automation = "Listing cancelled";
             }
             const card = document.createElement("div");
             card.className = "listing-card";
             card.innerHTML = `
-              <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h3 style="margin:0;">${listing.propertyId}</h3>
+              <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div>
+                  <div style="font-size:1rem; font-weight:700;">${listing.propertyId}</div>
+                  <div style="font-size:0.8rem; color:var(--text-secondary);">${STATE_LABELS[listing.state]}</div>
+                </div>
                 <span class="${verifiedClass}">${VERIFY_LABELS[verification]}</span>
               </div>
-              <div style="color:${listing.state === 0 ? '#64748b' : '#475569'};">${STATE_LABELS[listing.state]}</div>
-              <div style="font-size:14px; color:${listing.agent === ethersLib.ZeroAddress ? '#94a3b8' : '#475569'};">
-                Agent: ${listing.agent === ethersLib.ZeroAddress ? "n/a" : short(listing.agent)}
-              </div>
-              <div style="font-size:14px; color:#475569;">Reserve ${ethersLib.formatEther(listing.reservePrice)} ETH · Highest ${ethersLib.formatEther(listing.highestBid)} ETH</div>
-              ${listing.buyNowPrice > 0n ? `<div style="font-size:14px;">Buy now ${ethersLib.formatEther(listing.buyNowPrice)} ETH</div>` : ""}
-              <div style="font-size:13px; color:#94a3b8;">${timeline}</div>
-              <div style="font-size:13px; color:#0a4fd5;">${automation}</div>
+              <div style="font-size:0.8rem; color:var(--text-secondary);">Seller ${short(listing.seller)} • Agent ${listing.agent === ethersLib.ZeroAddress ? "n/a" : short(listing.agent)}</div>
+              <div style="font-size:0.8rem; color:var(--text-secondary);">${location}</div>
+              <div style="font-size:0.85rem;">Reserve ${ethersLib.formatEther(listing.reservePrice)} ETH · Highest ${ethersLib.formatEther(listing.highestBid)} ETH</div>
+              ${listing.buyNowPrice > 0n ? `<div style="font-size:0.8rem; color:#f472b6;">Buy now ${ethersLib.formatEther(listing.buyNowPrice)} ETH</div>` : ""}
+              <div style="font-size:0.75rem; color:var(--text-secondary);">${timeline}</div>
+              <div style="font-size:0.75rem; color:var(--neon-blue);">${automation}</div>
               <div class="listing-actions">
                 ${actionsForState(listing)}
               </div>
             `;
             container.appendChild(card);
           } catch (err) {
-            log(`Listing #${i} load failed: ${err.shortMessage || err.message}`);
+            log(`Listing #${i} load failed: ${formatError(err)}`);
           }
         }
       } catch (err) {
-        container.innerHTML = `<div class='listing-card'>${err.shortMessage || err.message}</div>`;
+        container.innerHTML = `<div class='listing-card'>${formatError(err)}</div>`;
       }
+    }
+
+    function exposeGlobals() {
+      const api = {
+        connectWallet,
+        registerProperty,
+        loadPropertyInfo,
+        createListing,
+        placeBid,
+        buyNow,
+        withdrawBid,
+        finalizeAuction,
+        completeEscrow,
+        claimRefund,
+        cancelListing,
+        checkCommission,
+        withdrawCommission,
+        refreshListings
+      };
+      Object.entries(api).forEach(([key, fn]) => {
+        if (typeof fn === "function") {
+          window[key] = fn;
+        }
+      });
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", exposeGlobals);
+    } else {
+      exposeGlobals();
     }
   </script>
 </body>

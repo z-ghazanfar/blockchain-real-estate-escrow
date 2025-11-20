@@ -1,12 +1,3 @@
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const datasetPath = path.join(__dirname, "mock-properties.json");
-const localDataset = JSON.parse(fs.readFileSync(datasetPath, "utf8"));
-
 const CENSUS_ENDPOINT =
   "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress";
 
@@ -21,28 +12,45 @@ export function resetHttpClient() {
   httpClient = defaultHttpClient;
 }
 
-export function formatAddressFromId(propertyId) {
-  const segments = propertyId
-    .split("-")
-    .map((seg) => seg.trim())
-    .filter(Boolean);
-  if (segments.length === 0) {
-    return "";
+function clean(value) {
+  if (!value) return "";
+  return value.toString().trim();
+}
+
+export function buildAddressLine({
+  street,
+  city,
+  state,
+  postalCode,
+  country
+} = {}) {
+  const streetLine = clean(street);
+  const cityVal = clean(city);
+  const stateVal = clean(state);
+  const postalVal = clean(postalCode);
+  const countryVal = clean(country);
+
+  const segments = [];
+  if (streetLine) {
+    segments.push(streetLine);
   }
-  const state = segments.at(-1);
-  const looksLikeState = /^[A-Z]{2}$/.test(state);
-  if (!looksLikeState) {
-    return segments.join(" ");
-  }
-  if (segments.length >= 3) {
-    const city = segments.at(-2);
-    if (city && city.length > 2) {
-      const street = segments.slice(0, -2).join(" ");
-      return `${street} ${city}, ${state}`.replace(/\s+/g, " ").trim();
+  let locality = [cityVal, stateVal].filter(Boolean).join(", ");
+  if (locality) {
+    if (postalVal) {
+      locality = `${locality} ${postalVal}`.trim();
     }
+    segments.push(locality);
+  } else if (postalVal) {
+    segments.push(postalVal);
   }
-  const streetOnly = segments.slice(0, -1).join(" ");
-  return `${streetOnly}, ${state}`.replace(/\s+/g, " ").trim();
+  if (countryVal) {
+    segments.push(countryVal);
+  }
+
+  return segments
+    .map((segment) => segment.replace(/\s+/g, " ").trim())
+    .filter(Boolean)
+    .join(", ");
 }
 
 export async function verifyWithCensus(addressLine) {
@@ -71,40 +79,31 @@ export async function verifyWithCensus(addressLine) {
   };
 }
 
-export async function lookupProperty(propertyId, metadataURI, dataset = localDataset) {
-  const normalized = propertyId.trim().toUpperCase();
-  const record = dataset.find(
-    (row) => row.propertyId.toUpperCase() === normalized
-  );
-  if (record) {
-    return {
-      exists: true,
-      evidenceURI: record.sourceDocuments[0] ?? metadataURI
-    };
+export async function lookupProperty({
+  propertyId,
+  street,
+  city,
+  state,
+  postalCode,
+  country
+}) {
+  const addressLine = buildAddressLine({
+    street,
+    city,
+    state,
+    postalCode,
+    country
+  });
+  if (!addressLine) {
+    throw new Error(`Address data missing for ${propertyId}`);
   }
-
-  const inferredAddress = formatAddressFromId(propertyId);
   try {
-    const censusResult = await verifyWithCensus(inferredAddress);
+    const censusResult = await verifyWithCensus(addressLine);
     if (censusResult.exists) {
       return censusResult;
     }
   } catch (err) {
     console.warn(`Census lookup failed for ${propertyId}: ${err.message}`);
-  }
-
-  if (metadataURI && metadataURI.startsWith("http")) {
-    try {
-      const resp = await httpClient(metadataURI, { method: "HEAD" });
-      if (resp.ok) {
-        return {
-          exists: true,
-          evidenceURI: metadataURI
-        };
-      }
-    } catch (err) {
-      console.warn(`Metadata URI fetch failed: ${err.message}`);
-    }
   }
 
   return {

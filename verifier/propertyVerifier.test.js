@@ -1,29 +1,44 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  formatAddressFromId,
+  buildAddressLine,
   lookupProperty,
   setHttpClient,
   resetHttpClient
 } from "./core.js";
 
-test("formatAddressFromId converts slug into human-readable address", () => {
-  assert.equal(formatAddressFromId("123-MAIN-ST-NY"), "123 MAIN ST, NY");
-  assert.equal(formatAddressFromId("987-LAKESHORE-DR-IL"), "987 LAKESHORE DR, IL");
+test("buildAddressLine composes full structured address", () => {
   assert.equal(
-    formatAddressFromId("200-OCEAN-BLVD-MIAMI-FL"),
-    "200 OCEAN BLVD MIAMI, FL"
+    buildAddressLine({
+      street: "123 Main St",
+      city: "Austin",
+      state: "TX",
+      postalCode: "78701",
+      country: "USA"
+    }),
+    "123 Main St, Austin, TX 78701, USA"
+  );
+
+  assert.equal(
+    buildAddressLine({
+      street: "99 Broadway",
+      city: "New York",
+      state: "NY"
+    }),
+    "99 Broadway, New York, NY"
+  );
+
+  assert.equal(
+    buildAddressLine({
+      postalCode: "10001",
+      country: "USA"
+    }),
+    "10001, USA"
   );
 });
 
-test("lookupProperty returns dataset overrides when available", async () => {
-  const result = await lookupProperty("123-MAIN-ST-NY");
-  assert.equal(result.exists, true);
-  assert.ok(result.evidenceURI.includes("data.cityofnewyork.us"));
-});
-
-test("lookupProperty uses Census fallback when dataset misses", async () => {
-  setHttpClient(async (url, options = {}) => {
+test("lookupProperty resolves via Census data", async () => {
+  setHttpClient(async (url) => {
     if (url.startsWith("https://geocoding.geo.census.gov")) {
       return {
         ok: true,
@@ -31,9 +46,7 @@ test("lookupProperty uses Census fallback when dataset misses", async () => {
           return {
             result: {
               addressMatches: [
-                {
-                  matchedAddress: "111 FAKE ST SOMEWHERE, CA"
-                }
+                { matchedAddress: "123 MAIN ST, AUSTIN, TX 78701" }
               ]
             }
           };
@@ -43,15 +56,22 @@ test("lookupProperty uses Census fallback when dataset misses", async () => {
     return { ok: false };
   });
 
-  const result = await lookupProperty("111-FAKE-ST-CA", undefined, []);
+  const result = await lookupProperty({
+    propertyId: "123-TEST",
+    street: "123 Main St",
+    city: "Austin",
+    state: "TX",
+    postalCode: "78701",
+    country: "USA"
+  });
   assert.equal(result.exists, true);
   assert.ok(result.evidenceURI.includes("geocoding.geo.census.gov"));
 
   resetHttpClient();
 });
 
-test("lookupProperty falls back to metadata URI when Census misses", async () => {
-  setHttpClient(async (url, options = {}) => {
+test("lookupProperty returns rejection when Census has no matches", async () => {
+  setHttpClient(async (url) => {
     if (url.startsWith("https://geocoding.geo.census.gov")) {
       return {
         ok: true,
@@ -60,19 +80,28 @@ test("lookupProperty falls back to metadata URI when Census misses", async () =>
         }
       };
     }
-    if (url === "https://example.com/package.pdf" && options.method === "HEAD") {
-      return { ok: true };
-    }
     return { ok: false };
   });
 
-  const result = await lookupProperty(
-    "445-UNKNOWN-AVE-TX",
-    "https://example.com/package.pdf",
-    []
-  );
-  assert.equal(result.exists, true);
-  assert.equal(result.evidenceURI, "https://example.com/package.pdf");
+  const result = await lookupProperty({
+    propertyId: "999-UNKNOWN",
+    street: "999 Unknown St",
+    city: "Nowhere",
+    state: "CA",
+    postalCode: "90000",
+    country: "USA"
+  });
+  assert.equal(result.exists, false);
+  assert.equal(result.evidenceURI.includes("not-found"), true);
 
   resetHttpClient();
+});
+
+test("lookupProperty throws when address data missing", async () => {
+  await assert.rejects(
+    lookupProperty({
+      propertyId: "NOPE"
+    }),
+    /Address data missing/
+  );
 });

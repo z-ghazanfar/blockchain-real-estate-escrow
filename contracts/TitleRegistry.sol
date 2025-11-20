@@ -11,7 +11,11 @@ contract TitleRegistry {
 
     struct Property {
         address owner;
-        string metadataURI;
+        string street;
+        string city;
+        string state;
+        string postalCode;
+        string country;
         string evidenceURI;
         VerificationStatus status;
         bool exists;
@@ -22,13 +26,29 @@ contract TitleRegistry {
     address public registryAdmin;
     address public verifier;
 
-    event PropertyRegistered(string indexed propertyId, address indexed owner, string metadataURI);
+    event PropertyRegistered(
+        string propertyId,
+        address indexed owner,
+        string street,
+        string city,
+        string state,
+        string postalCode,
+        string country
+    );
     event OwnershipTransferred(
-        string indexed propertyId,
+        string propertyId,
         address indexed previousOwner,
         address indexed newOwner
     );
-    event VerificationRequested(string indexed propertyId, address indexed requester, string metadataURI);
+    event VerificationRequested(
+        string propertyId,
+        string street,
+        string city,
+        string state,
+        string postalCode,
+        string country,
+        address indexed requester
+    );
     event VerificationResolved(
         string indexed propertyId,
         VerificationStatus status,
@@ -52,22 +72,45 @@ contract TitleRegistry {
     }
 
     /// @notice seller registers a property and triggers an off-chain verification workflow
-    function registerProperty(string memory propertyId, string memory metadataURI) external {
+    function registerProperty(
+        string memory propertyId,
+        string memory street,
+        string memory city,
+        string memory state,
+        string memory postalCode,
+        string memory country
+    ) external {
         require(bytes(propertyId).length > 0, "Property id required");
-        require(bytes(metadataURI).length > 0, "Metadata required");
+        require(bytes(street).length > 0, "Street required");
+        require(bytes(city).length > 0, "City required");
+        require(bytes(state).length > 0, "State required");
+        require(bytes(postalCode).length > 0, "Postal required");
+        require(bytes(country).length > 0, "Country required");
         Property storage existing = properties[propertyId];
         require(!existing.exists, "Already registered");
 
         properties[propertyId] = Property({
             owner: msg.sender,
-            metadataURI: metadataURI,
+            street: street,
+            city: city,
+            state: state,
+            postalCode: postalCode,
+            country: country,
             evidenceURI: "",
             status: VerificationStatus.Pending,
             exists: true
         });
 
-        emit PropertyRegistered(propertyId, msg.sender, metadataURI);
-        emit VerificationRequested(propertyId, msg.sender, metadataURI);
+        emit PropertyRegistered(propertyId, msg.sender, street, city, state, postalCode, country);
+        emit VerificationRequested(
+            propertyId,
+            street,
+            city,
+            state,
+            postalCode,
+            country,
+            msg.sender
+        );
     }
 
     /// @notice owner can resubmit to trigger another verification scrape/check
@@ -78,7 +121,15 @@ contract TitleRegistry {
 
         property.status = VerificationStatus.Pending;
         property.evidenceURI = "";
-        emit VerificationRequested(propertyId, msg.sender, property.metadataURI);
+        emit VerificationRequested(
+            propertyId,
+            property.street,
+            property.city,
+            property.state,
+            property.postalCode,
+            property.country,
+            msg.sender
+        );
     }
 
     /// @notice off-chain verifier writes back the result of a registry scrape
@@ -93,17 +144,6 @@ contract TitleRegistry {
         property.status = propertyExists ? VerificationStatus.Verified : VerificationStatus.Rejected;
         property.evidenceURI = evidenceURI;
         emit VerificationResolved(propertyId, property.status, evidenceURI);
-    }
-
-    /// @notice owner can update descriptive metadata (e.g., IPFS doc)
-    function updateMetadata(string memory propertyId, string memory metadataURI) external {
-        Property storage property = properties[propertyId];
-        require(property.exists, "Not registered");
-        require(msg.sender == property.owner, "Only owner");
-        require(bytes(metadataURI).length > 0, "Metadata required");
-
-        property.metadataURI = metadataURI;
-        // metadata updates do not change verification status automatically
     }
 
     /// @notice transfers title to a new owner
@@ -150,14 +190,28 @@ contract TitleRegistry {
         view
         returns (
             address owner,
-            string memory metadataURI,
             VerificationStatus status,
             string memory evidenceURI,
+            string memory street,
+            string memory city,
+            string memory state,
+            string memory postalCode,
+            string memory country,
             bool exists
         )
     {
         Property storage property = properties[propertyId];
-        return (property.owner, property.metadataURI, property.status, property.evidenceURI, property.exists);
+        return (
+            property.owner,
+            property.status,
+            property.evidenceURI,
+            property.street,
+            property.city,
+            property.state,
+            property.postalCode,
+            property.country,
+            property.exists
+        );
     }
 
     function setVerifier(address newVerifier) external onlyAdmin {

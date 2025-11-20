@@ -300,36 +300,9 @@ contract TransactifyMarketplace {
         external
         view
         listingExists(listingId)
-        returns (
-            string memory propertyId,
-            address seller,
-            address agent,
-            uint64 createdAt,
-            uint64 biddingEnd,
-            uint64 escrowDeadline,
-            uint128 reservePrice,
-            uint128 minIncrement,
-            uint128 buyNowPrice,
-            uint256 highestBid,
-            address highestBidder,
-            EscrowState state
-        )
+        returns (Listing memory listing)
     {
-        Listing storage listing = listings[listingId];
-        return (
-            listing.propertyId,
-            listing.seller,
-            listing.agent,
-            listing.createdAt,
-            listing.biddingEnd,
-            listing.escrowDeadline,
-            listing.reservePrice,
-            listing.minIncrement,
-            listing.buyNowPrice,
-            listing.highestBid,
-            listing.highestBidder,
-            listing.state
-        );
+        listing = listings[listingId];
     }
 
     function totalListings() external view returns (uint256) {

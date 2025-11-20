@@ -1,0 +1,31 @@
+{
+  "name": "blockchain-real-estate-escrow",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "hardhat": "hardhat",
+    "deploy:registry": "hardhat run scripts/deployRegistry.js --network sepolia",
+    "deploy:marketplace": "hardhat run scripts/deployMarketplace.js --network sepolia"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/z-ghazanfar/blockchain-real-estate-escrow.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/z-ghazanfar/blockchain-real-estate-escrow/issues"
+  },
+  "homepage": "https://github.com/z-ghazanfar/blockchain-real-estate-escrow#readme",
+  "description": "",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "hardhat": "^2.27.0"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3"
+  }
+}
