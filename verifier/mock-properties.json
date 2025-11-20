@@ -1,0 +1,24 @@
+[
+  {
+    "propertyId": "123-MAIN-ST-NY",
+    "address": "123 Main Street, New York, NY 10001",
+    "parcel": "Block 101 • Lot 7 • Manhattan",
+    "lastSaleDate": "2023-12-01",
+    "lastSalePriceUSD": 1820000,
+    "sourceDocuments": [
+      "https://data.cityofnewyork.us/resource/uwyv-629c.json?parcel=101007",
+      "ipfs://QmSellerPackageExample1"
+    ]
+  },
+  {
+    "propertyId": "987-LAKESHORE-DR-IL",
+    "address": "987 Lakeshore Drive, Chicago, IL 60611",
+    "parcel": "PIN 17-04-234-018-0000",
+    "lastSaleDate": "2024-02-10",
+    "lastSalePriceUSD": 1425000,
+    "sourceDocuments": [
+      "https://cookcountypropertyinfo.com/pin/17042340180000",
+      "ipfs://QmSellerPackageExample2"
+    ]
+  }
+]

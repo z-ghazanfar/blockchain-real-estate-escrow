@@ -1,0 +1,14 @@
+{
+  "name": "transactify-verifier",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node propertyVerifier.js",
+    "test": "node --test propertyVerifier.test.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "ethers": "^6.13.0"
+  }
+}

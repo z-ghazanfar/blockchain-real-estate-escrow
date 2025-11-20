@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Transactify Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.0/dist/ethers.umd.min.js"></script>
+  <style>
+    :root {
+      color-scheme: light;
+      --primary: #0a4fd5;
+      --secondary: #0f172a;
+      --muted: #94a3b8;
+      --card: #ffffff;
+      --bg: #eef2ff;
+      --outline: #e2e8f0;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Space Grotesk', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--secondary);
+    }
+    header {
+      padding: 24px 4vw 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .brand {
+      font-size: 30px;
+      font-weight: 600;
+      color: var(--primary);
+      letter-spacing: -0.5px;
+    }
+    header button {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-size: 14px;
+      cursor: pointer;
+      background: rgba(10,79,213,.12);
+      color: var(--primary);
+    }
+    main {
+      max-width: 1200px;
+      margin: 0 auto 60px;
+      padding: 0 4vw 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .panel {
+      background: var(--card);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
+    }
+    .hero-panel {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+      align-items: center;
+    }
+    .hero-panel h1 {
+      margin: 0 0 10px;
+      font-size: 36px;
+    }
+    .hero-panel p { color: var(--muted); margin: 0; }
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+    .stat {
+      background: rgba(10,79,213,.07);
+      border-radius: 16px;
+      padding: 14px;
+    }
+    .stat span {
+      display: block;
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--primary);
+    }
+    .workflow-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .workflow-card {
+      border: 1px solid var(--outline);
+      border-radius: 18px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .workflow-card h3 {
+      margin: 0;
+      font-size: 18px;
+    }
+    label {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+    input {
+      width: 100%;
+      border: 1px solid var(--outline);
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 15px;
+      font-family: inherit;
+      background: #f8fbff;
+    }
+    .btn {
+      border: none;
+      border-radius: 11px;
+      padding: 11px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--primary);
+      color: #fff;
+    }
+    .btn.outline {
+      background: transparent;
+      color: var(--primary);
+      border: 1px solid rgba(10,79,213,.3);
+    }
+    .section-title {
+      margin: 0 0 14px;
+      font-size: 24px;
+    }
+    .section-subtitle {
+      margin: 0 0 20px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+    .listings-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .listings-grid {
+      display: grid;
+      gap: 18px;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    }
+    .listing-card {
+      border: 1px solid var(--outline);
+      border-radius: 18px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .pill {
+      display: inline-flex;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      color: #fff;
+    }
+    .pill.verified { background: #22c55e; }
+    .pill.pending { background: #f59e0b; }
+    .pill.rejected { background: #ef4444; }
+    .listing-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .listing-actions button {
+      border: none;
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 13px;
+      cursor: pointer;
+      background: rgba(10,79,213,.12);
+      color: var(--primary);
+    }
+    .log-panel {
+      background: #10152b;
+      color: #9fb5ff;
+      font-family: "Space Grotesk", monospace;
+      padding: 18px;
+      border-radius: 18px;
+      height: 160px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">Transactify</div>
+    <div style="display:flex; gap:10px;">
+      <button onclick="window.location.href='index.html'">Landing</button>
+      <button onclick="window.location.href='marketplace.html'">Marketplace</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel hero-panel">
+      <div>
+        <p style="text-transform:uppercase; letter-spacing:0.18em; font-size:12px; color: var(--primary);">Control Room</p>
+        <h1>Launch, monitor, settle.</h1>
+        <p>Connect your wallet to manage verified properties, listings, commissions, and escrow automation. We only surface the actions relevant to your current phase.</p>
+        <button class="btn" id="connectBtn" onclick="connectWallet()">🔗 Connect Wallet</button>
+      </div>
+      <div>
+        <div class="stats-row">
+          <div class="stat">
+            Wallet
+            <span id="walletAddress">Not connected</span>
+          </div>
+          <div class="stat">
+            Chain
+            <span id="chainId">-</span>
+          </div>
+          <div class="stat">
+            Listings
+            <span id="metricListings">0</span>
+          </div>
+          <div class="stat">
+            Commission bps
+            <span id="metricCommission">-</span>
+          </div>
+          <div class="stat">
+            Anti-snipe
+            <span id="metricWindow">-</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="workflow-grid">
+        <div class="workflow-card">
+          <h3>Step 1 · Verify Property</h3>
+          <label>Property Identifier</label>
+          <input id="propertyId" placeholder="e.g. 123-MAIN-ST-NY">
+          <label>Metadata / Evidence URI</label>
+          <input id="propertyMetadata" placeholder="https://docs.transactify.xyz/property.pdf">
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="btn" onclick="registerProperty()">Request Verification</button>
+            <button class="btn outline" onclick="requestReverification()">Re-run Oracle</button>
+            <button class="btn outline" onclick="loadPropertyInfo()">View Status</button>
+          </div>
+          <div class="log-panel" style="height:110px; margin-top:10px; background:#eef2ff; color:#1f2a44;" id="propertyStatus">Awaiting selection…</div>
+        </div>
+        <div class="workflow-card">
+          <h3>Step 2 · Publish Listing</h3>
+          <label>Property ID</label>
+          <input id="listingPropertyId" placeholder="Must be verified">
+          <label>Agent Wallet (optional)</label>
+          <input id="listingAgent" placeholder="0xAgentWallet">
+          <label>Reserve Price (ETH)</label>
+          <input id="listingReserve" type="number" min="0" step="0.01" placeholder="80">
+          <label>Min Increment (ETH)</label>
+          <input id="listingIncrement" type="number" min="0.01" step="0.01" placeholder="0.5">
+          <label>Optional Buy Now (ETH)</label>
+          <input id="listingBuyNow" type="number" min="0" step="0.01" placeholder="Leave blank to disable">
+          <label>Bidding Duration (hours)</label>
+          <input id="listingDuration" type="number" min="1" step="1" placeholder="72">
+          <button class="btn" style="margin-top:8px;" onclick="createListing()">Launch Listing</button>
+        </div>
+        <div class="workflow-card" id="commission">
+          <h3>Step 3 · Agent Center</h3>
+          <label>Agent Address</label>
+          <input id="agentLookup" placeholder="0x...">
+          <div style="display:flex; gap:10px; margin-top:12px;">
+            <button class="btn outline" onclick="checkCommission()">Check Balance</button>
+            <button class="btn" onclick="withdrawCommission()">Withdraw</button>
+          </div>
+          <div class="log-panel" style="height:110px; margin-top:12px; background:#eef2ff; color:#1f2a44;" id="commissionStatus">Connect a wallet to view commissions.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="listings-header">
+        <div>
+          <h2 class="section-title">Live Listings</h2>
+          <p class="section-subtitle">Only the actions relevant to the current state are shown. Auctions auto-extend if bids arrive near the end.</p>
+        </div>
+        <button class="btn outline" onclick="refreshListings()">Refresh</button>
+      </div>
+      <div id="listings" class="listings-grid">
+        <div class="listing-card">Connect your wallet to load listings.</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2 class="section-title">Activity Feed</h2>
+      <p class="section-subtitle">Recent contract interactions and RPC responses.</p>
+      <div id="log" class="log-panel">Ready…</div>
+    </section>
+  </main>
+
+  <script>
+    const ethersLib = window.ethers;
+
+    const CONTRACTS = {
+      titleRegistry: "0xYourTitleRegistryAddress",
+      marketplace: "0xYourMarketplaceAddress",
+      agentCommission: "0xYourAgentCommissionAddress"
+    };
+
+    const titleABI = [
+      "function registerProperty(string,string) external",
+      "function requestReverification(string) external",
+      "function propertyInfo(string) external view returns(address,string,uint8,string,bool)",
+      "function isVerified(string) external view returns(bool)",
+      "function verifyOwnership(string,address) external view returns(bool)"
+    ];
+
+    const marketplaceABI = [
+      "function createListing(string,uint256,uint256,uint256,uint256,address) external returns(uint256)",
+      "function placeBid(uint256) external payable",
+      "function withdrawBid(uint256) external",
+      "function cancelListing(uint256) external",
+      "function finalizeAuction(uint256) external",
+      "function completeEscrow(uint256) external",
+      "function claimEscrowRefund(uint256) external",
+      "function totalListings() external view returns(uint256)",
+      "function previewEscrowAction(uint256) external view returns(bool,bool,uint256)",
+      "function getListing(uint256) external view returns(string,address,address,uint64,uint64,uint64,uint128,uint128,uint128,uint256,address,uint8)",
+      "function pendingReturns(uint256,address) external view returns(uint256)",
+      "function antiSnipingWindow() external view returns(uint256)",
+      "function antiSnipingExtension() external view returns(uint256)"
+    ];
+
+    const commissionABI = [
+      "function commissionBps() external view returns(uint256)",
+      "function getCommissionBalance(address) external view returns(uint256)",
+      "function releaseCommission(address payable) external",
+      "function recordCommission(address,uint256) external payable"
+    ];
+
+    const STATE_LABELS = ["Auction","Awaiting Title Transfer","Completed","Refunded","Cancelled"];
+    const VERIFY_LABELS = ["None","Pending","Verified","Rejected"];
+
+    let provider, signer, registry, marketplace, commissionContract, currentAccount;
+
+    function log(message) {
+      const el = document.getElementById("log");
+      const timestamp = new Date().toLocaleTimeString();
+      el.textContent += `\n[${timestamp}] ${message}`;
+      el.scrollTop = el.scrollHeight;
+    }
+
+    function short(addr) {
+      if (!addr) return "-";
+      return `${addr.slice(0,6)}…${addr.slice(-4)}`;
+    }
+
+    function countdown(seconds) {
+      const total = Number(seconds);
+      if (total <= 0) return "Ended";
+      const hrs = Math.floor(total / 3600);
+      const mins = Math.floor((total % 3600) / 60);
+      const secs = Math.floor(total % 60);
+      const parts = [];
+      if (hrs) parts.push(`${hrs}h`);
+      if (mins) parts.push(`${mins}m`);
+      if (secs || (!hrs && !mins)) parts.push(`${secs}s`);
+      return parts.join(" ");
+    }
+
+    async function connectWallet() {
+      if (!window.ethereum) {
+        alert("Install MetaMask to continue.");
+        return;
+      }
+      provider = new ethersLib.BrowserProvider(window.ethereum);
+      await provider.send("eth_requestAccounts", []);
+      signer = await provider.getSigner();
+      registry = new ethersLib.Contract(CONTRACTS.titleRegistry, titleABI, signer);
+      marketplace = new ethersLib.Contract(CONTRACTS.marketplace, marketplaceABI, signer);
+      commissionContract = new ethersLib.Contract(CONTRACTS.agentCommission, commissionABI, signer);
+
+      currentAccount = await signer.getAddress();
+      const network = await provider.getNetwork();
+      document.getElementById("walletAddress").textContent = short(currentAccount);
+      document.getElementById("chainId").textContent = Number(network.chainId);
+      log(`Wallet connected: ${currentAccount}`);
+
+      try {
+        const bps = await commissionContract.commissionBps();
+        const windowSeconds = Number(await marketplace.antiSnipingWindow());
+        const extensionSeconds = Number(await marketplace.antiSnipingExtension());
+        document.getElementById("metricCommission").textContent = Number(bps);
+        document.getElementById("metricWindow").textContent =
+          windowSeconds > 0 ? `${windowSeconds/60}m / +${extensionSeconds/60}m` : "Off";
+      } catch (err) {
+        log(`Metric read failed: ${err.shortMessage || err.message}`);
+      }
+
+      refreshListings();
+    }
+
+    async function registerProperty() {
+      try {
+        const id = document.getElementById("propertyId").value.trim();
+        const metadata = document.getElementById("propertyMetadata").value.trim();
+        if (!id || !metadata) return alert("Provide ID + metadata");
+        const tx = await registry.registerProperty(id, metadata);
+        log(`registerProperty tx: ${tx.hash}`);
+        await tx.wait();
+        log(`Property ${id} submitted for verification.`);
+        await loadPropertyInfo();
+      } catch (err) {
+        log(err.shortMessage || err.message);
+      }
+    }
+
+    async function requestReverification() {
+      try {
+        const id = document.getElementById("propertyId").value.trim();
+        if (!id) return alert("Property ID required.");
+        const tx = await registry.requestReverification(id);
+        log(`requestReverification tx: ${tx.hash}`);
+        await tx.wait();
+        log(`Property ${id} set back to pending.`);
+        await loadPropertyInfo();
+      } catch (err) {
+        log(err.shortMessage || err.message);
+      }
+    }
+
+    async function loadPropertyInfo() {
+      try {
+        const id = document.getElementById("propertyId").value.trim();
+        if (!id) return;
+        const info = await registry.propertyInfo(id);
+        document.getElementById("propertyStatus").innerHTML = `
+          <strong>${id}</strong><br>
+          Owner: ${short(info[0])}<br>
+          Status: ${VERIFY_LABELS[Number(info[2])]}<br>
+          Metadata: ${info[1] || "n/a"}<br>
+          Evidence: ${info[3] || "pending"}
+        `;
+      } catch (err) {
+        document.getElementById("propertyStatus").textContent = err.shortMessage || err.message;
+      }
+    }
+
+    async function createListing() {
+      try {
+        if (!signer) return alert("Connect wallet first.");
+        const propertyId = document.getElementById("listingPropertyId").value.trim();
+        const agent = document.getElementById("listingAgent").value.trim() || ethersLib.ZeroAddress;
+        const reserve = document.getElementById("listingReserve").value;
+        const increment = document.getElementById("listingIncrement").value || "0";
+        const buyNow = document.getElementById("listingBuyNow").value;
+        const durationHours = document.getElementById("listingDuration").value;
+        if (!propertyId || !reserve || !increment || !durationHours) {
+          return alert("Fill in the required listing fields.");
+        }
+        const tx = await marketplace.createListing(
+          propertyId,
+          ethersLib.parseEther(reserve),
+          ethersLib.parseEther(increment),
+          buyNow ? ethersLib.parseEther(buyNow) : 0n,
+          BigInt(Number(durationHours) * 3600),
+          agent
+        );
+        log(`createListing tx: ${tx.hash}`);
+        await tx.wait();
+        log(`Listing created for ${propertyId}`);
+        refreshListings();
+      } catch (err) {
+        log(err.shortMessage || err.message);
+      }
+    }
+
+    async function placeBid(listingId, overrideAmount) {
+      try {
+        let valueWei = overrideAmount;
+        if (!valueWei) {
+          const field = document.getElementById(`bid-${listingId}`);
+          if (!field || !field.value) return alert("Enter a bid amount.");
+          valueWei = ethersLib.parseEther(field.value);
+        }
+        const tx = await marketplace.placeBid(listingId, { value: valueWei });
+        log(`placeBid tx: ${tx.hash}`);
+        await tx.wait();
+        refreshListings();
+      } catch (err) {
+        log(err.shortMessage || err.message);
+      }
+    }
+
+    function buyNow(listingId, priceWei) {
+      placeBid(listingId, BigInt(priceWei));
+    }
+
+    async function withdrawBid(listingId) {
+      try {
+        const tx = await marketplace.withdrawBid(listingId);
+        log(`withdrawBid tx: ${tx.hash}`);
+        await tx.wait();
+        refreshListings();
+      } catch (err) {
+        log(err.shortMessage || err.message);
+      }
+    }
+
+    async function finalizeAuction(listingId) {
+      try {
+        const tx = await marketplace.finalizeAuction(listingId);
+        log(`finalizeAuction tx: ${tx.hash}`);
+        await tx.wait();
+        refreshListings();
+      } catch (err) {
+        log(err.shortMessage || err.message);
+      }
+    }
+
+    async function completeEscrow(listingId) {
+      try {
+        const tx = await marketplace.completeEscrow(listingId);
+        log(`completeEscrow tx: ${tx.hash}`);
+        await tx.wait();
+        refreshListings();
+      } catch (err) {
+        log(err.shortMessage || err.message);
+      }
+    }
+
+    async function claimRefund(listingId) {
+      try {
+        const tx = await marketplace.claimEscrowRefund(listingId);
+        log(`claimEscrowRefund tx: ${tx.hash}`);
+        await tx.wait();
+        refreshListings();
+      } catch (err) {
+        log(err.shortMessage || err.message);
+      }
+    }
+
+    async function cancelListing(listingId) {
+      try {
+        const tx = await marketplace.cancelListing(listingId);
+        log(`cancelListing tx: ${tx.hash}`);
+        await tx.wait();
+        refreshListings();
+      } catch (err) {
+        log(err.shortMessage || err.message);
+      }
+    }
+
+    async function checkCommission() {
+      try {
+        const agent = document.getElementById("agentLookup").value.trim();
+        if (!agent) return alert("Agent address required.");
+        const bal = await commissionContract.getCommissionBalance(agent);
+        document.getElementById("commissionStatus").textContent =
+          `${ethersLib.formatEther(bal)} ETH available for ${short(agent)}`;
+      } catch (err) {
+        document.getElementById("commissionStatus").textContent = err.shortMessage || err.message;
+      }
+    }
+
+    async function withdrawCommission() {
+      try {
+        const agent = document.getElementById("agentLookup").value.trim();
+        if (!agent) return alert("Agent address required.");
+        const tx = await commissionContract.releaseCommission(agent);
+        log(`releaseCommission tx: ${tx.hash}`);
+        await tx.wait();
+        checkCommission();
+      } catch (err) {
+        log(err.shortMessage || err.message);
+      }
+    }
+
+    function actionsForState(listing) {
+      const actions = [];
+      if (listing.state === 0) {
+        actions.push(`<div class="inline-input" style="display:flex; gap:8px; align-items:center;">
+          <input id="bid-${listing.id}" type="number" min="0" step="0.01" placeholder="Bid (ETH)">
+          <button class="btn outline" onclick="placeBid(${listing.id})">Bid</button>
+        </div>`);
+        if (listing.buyNowPrice > 0n) {
+          actions.push(`<button onclick="buyNow(${listing.id}, '${listing.buyNowPrice}')">Buy Now (${ethersLib.formatEther(listing.buyNowPrice)} ETH)</button>`);
+        }
+        actions.push(`<button onclick="finalizeAuction(${listing.id})">Finalize (after timer)</button>`);
+        if (listing.highestBid === 0n) {
+          actions.push(`<button onclick="cancelListing(${listing.id})">Cancel Listing</button>`);
+        }
+      } else if (listing.state === 1) {
+        actions.push(`<button onclick="completeEscrow(${listing.id})">Release Funds</button>`);
+        actions.push(`<button onclick="claimRefund(${listing.id})">Trigger Refund</button>`);
+      } else if (listing.state === 2) {
+        actions.push(`<span style="color:#22c55e;">Escrow complete</span>`);
+      } else if (listing.state === 3) {
+        actions.push(`<span style="color:#ef4444;">Refunded to buyer</span>`);
+      }
+      if (listing.pendingWithdraw > 0n) {
+        actions.push(`<button onclick="withdrawBid(${listing.id})">Withdraw ${ethersLib.formatEther(listing.pendingWithdraw)} ETH</button>`);
+      }
+      return actions.join("");
+    }
+
+    async function refreshListings() {
+      if (!marketplace) return;
+      const container = document.getElementById("listings");
+      container.innerHTML = "<div class='listing-card'>Loading listings…</div>";
+      try {
+        const total = Number(await marketplace.totalListings());
+        document.getElementById("metricListings").textContent = total;
+        if (!total) {
+          container.innerHTML = "<div class='listing-card'>No listings yet. Create one above.</div>";
+          return;
+        }
+        container.innerHTML = "";
+        const now = Math.floor(Date.now() / 1000);
+        for (let i = 1; i <= total; i++) {
+          try {
+            const data = await marketplace.getListing(i);
+            const listing = {
+              id: i,
+              propertyId: data[0],
+              seller: data[1],
+              agent: data[2],
+              createdAt: Number(data[3]),
+              biddingEnd: Number(data[4]),
+              escrowDeadline: Number(data[5]),
+              reservePrice: data[6],
+              minIncrement: data[7],
+              buyNowPrice: data[8],
+              highestBid: data[9],
+              highestBidder: data[10],
+              state: Number(data[11])
+            };
+            if (!listing.propertyId) continue;
+            const propertyInfo = await registry.propertyInfo(listing.propertyId);
+            const verification = Number(propertyInfo[2]);
+            const verifiedClass = verification === 2 ? "pill verified" : verification === 1 ? "pill pending" : "pill rejected";
+            const pendingAmount = currentAccount ? await marketplace.pendingReturns(i, currentAccount) : 0n;
+            listing.pendingWithdraw = pendingAmount;
+            let timeline = listing.biddingEnd > now ? `Ends in ${countdown(listing.biddingEnd - now)}` : "Auction ended";
+            let automation = "Escrow inactive";
+            if (listing.state === 1) {
+              const [canRelease, canRefund, remaining] = await marketplace.previewEscrowAction(i);
+              automation = canRelease ? "Ready to release" : canRefund ? "Deadline passed" : `Waiting (${countdown(remaining)})`;
+            } else if (listing.state === 2) {
+              automation = "Settlement complete";
+            } else if (listing.state === 3) {
+              automation = "Buyer refunded";
+            } else if (listing.state === 4) {
+              automation = "Listing cancelled";
+            }
+            const card = document.createElement("div");
+            card.className = "listing-card";
+            card.innerHTML = `
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3 style="margin:0;">${listing.propertyId}</h3>
+                <span class="${verifiedClass}">${VERIFY_LABELS[verification]}</span>
+              </div>
+              <div style="color:${listing.state === 0 ? '#64748b' : '#475569'};">${STATE_LABELS[listing.state]}</div>
+              <div style="font-size:14px; color:${listing.agent === ethersLib.ZeroAddress ? '#94a3b8' : '#475569'};">
+                Agent: ${listing.agent === ethersLib.ZeroAddress ? "n/a" : short(listing.agent)}
+              </div>
+              <div style="font-size:14px; color:#475569;">Reserve ${ethersLib.formatEther(listing.reservePrice)} ETH · Highest ${ethersLib.formatEther(listing.highestBid)} ETH</div>
+              ${listing.buyNowPrice > 0n ? `<div style="font-size:14px;">Buy now ${ethersLib.formatEther(listing.buyNowPrice)} ETH</div>` : ""}
+              <div style="font-size:13px; color:#94a3b8;">${timeline}</div>
+              <div style="font-size:13px; color:#0a4fd5;">${automation}</div>
+              <div class="listing-actions">
+                ${actionsForState(listing)}
+              </div>
+            `;
+            container.appendChild(card);
+          } catch (err) {
+            log(`Listing #${i} load failed: ${err.shortMessage || err.message}`);
+          }
+        }
+      } catch (err) {
+        container.innerHTML = `<div class='listing-card'>${err.shortMessage || err.message}</div>`;
+      }
+    }
+  </script>
+</body>
+</html>
