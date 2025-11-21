@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node propertyVerifier.js",
+    "once": "node runOnce.js",
     "test": "node --test propertyVerifier.test.js"
   },
   "dependencies": {
