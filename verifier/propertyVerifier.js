@@ -20,18 +20,33 @@ for (const key of REQUIRED_ENV) {
   }
 }
 
+const POLL_MS = Number(process.env.VERIFIER_POLL_INTERVAL_MS || "45000");
+const START_BLOCK = process.env.VERIFIER_START_BLOCK
+  ? Number(process.env.VERIFIER_START_BLOCK)
+  : 0;
+
 const TITLE_REGISTRY_ABI = [
   "event VerificationRequested(string propertyId,string street,string city,string state,string postalCode,string country,address indexed requester)",
   "function recordVerificationResult(string propertyId, bool propertyExists, string evidenceURI) external"
 ];
 
-const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
-const wallet = new ethers.Wallet(process.env.VERIFIER_PRIVATE_KEY, provider);
-const registry = new ethers.Contract(
+function buildProvider() {
+  const url = process.env.RPC_URL;
+  if (!url) throw new Error("RPC_URL missing");
+  return url.startsWith("ws")
+    ? new ethers.WebSocketProvider(url)
+    : new ethers.JsonRpcProvider(url, undefined, { polling: true, pollingInterval: POLL_MS });
+}
+
+let provider = buildProvider();
+let wallet = new ethers.Wallet(process.env.VERIFIER_PRIVATE_KEY, provider);
+let registry = new ethers.Contract(
   process.env.TITLE_REGISTRY_ADDRESS,
   TITLE_REGISTRY_ABI,
   wallet
 );
+const iface = new ethers.Interface(TITLE_REGISTRY_ABI);
+let lastBlock = START_BLOCK;
 
 function toPlainString(value) {
   if (typeof value === "string") {
@@ -117,13 +132,34 @@ async function handleVerification(payload) {
   console.log(`✅ Verification stored on-chain for ${propertyId}`);
 }
 
-export function startVerifier() {
-  console.log("Starting Transactify verifier...");
-  console.log(`Listening to TitleRegistry @ ${registry.target}`);
-  registry.on(
-    "VerificationRequested",
-    async (propertyId, street, city, state, postalCode, country, requester) => {
+async function pollEvents() {
+  try {
+    const latest = await provider.getBlockNumber();
+    if (lastBlock === 0) {
+      lastBlock = latest;
+      return;
+    }
+    const from = lastBlock + 1;
+    const to = latest;
+    if (to < from) return;
+    const logs = await provider.getLogs({
+      address: registry.target,
+      topics: [iface.getEventTopic("VerificationRequested")],
+      fromBlock: from,
+      toBlock: to
+    });
+    for (const log of logs) {
       try {
+        const parsed = iface.parseLog(log);
+        const [
+          propertyId,
+          street,
+          city,
+          state,
+          postalCode,
+          country,
+          requester
+        ] = parsed.args;
         await handleVerification({
           propertyId,
           street,
@@ -134,12 +170,34 @@ export function startVerifier() {
           requester
         });
       } catch (err) {
-        console.error(
-          `❌ Failed to process ${propertyId}: ${err.shortMessage || err.message}`
-        );
+        console.error(`❌ Failed to process log: ${err.shortMessage || err.message}`);
       }
     }
-  );
+    lastBlock = to;
+  } catch (err) {
+    console.error(
+      `Poll error (rate limit likely); backing off ${POLL_MS}ms: ${err.shortMessage || err.message}`
+    );
+  }
+}
+
+export function startVerifier() {
+  console.log("Starting Transactify verifier...");
+  provider
+    .getNetwork()
+    .then((net) => {
+      console.log(
+        `Polling TitleRegistry @ ${registry.target} on chain ${net.chainId} every ${POLL_MS}ms`
+      );
+      setInterval(pollEvents, POLL_MS);
+      pollEvents();
+    })
+    .catch((err) => {
+      console.error(
+        `Provider failed to detect network; retry in 2s (${err.shortMessage || err.message})`
+      );
+      setTimeout(startVerifier, 2000);
+    });
 }
 
 const entryFile = process.argv[1]

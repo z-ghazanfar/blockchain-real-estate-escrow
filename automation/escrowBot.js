@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import dotenv from "dotenv";
 import { ethers } from "ethers";
 
@@ -11,18 +13,34 @@ for (const key of REQUIRED) {
   }
 }
 
-const marketplaceAbi = [
-  "event AuctionFinalized(uint256 indexed listingId, address highestBidder, uint256 amount)",
-  "event EscrowCompleted(uint256 indexed listingId, address buyer, uint256 amount)",
-  "event EscrowRefunded(uint256 indexed listingId, address buyer, uint256 amount)",
-  "function previewEscrowAction(uint256) external view returns (bool canRelease, bool canRefund, uint256 timeRemaining)",
-  "function completeEscrow(uint256 listingId) external",
-  "function claimEscrowRefund(uint256 listingId) external",
-  "function getListing(uint256) external view returns(string,address,address,uint64,uint64,uint64,uint128,uint128,uint128,uint256,address,uint8)",
-  "function totalListings() external view returns(uint256)"
-];
+function loadAbi() {
+  const artifactPath = path.resolve(
+    path.dirname(new URL(import.meta.url).pathname),
+    "../artifacts/contracts/TransactifyMarketplace.sol/TransactifyMarketplace.json"
+  );
+  try {
+    const raw = fs.readFileSync(artifactPath, "utf8");
+    return JSON.parse(raw).abi;
+  } catch (_) {
+    return [
+      "event AuctionFinalized(uint256 indexed listingId, address highestBidder, uint256 amount)",
+      "event EscrowCompleted(uint256 indexed listingId, address buyer, uint256 amount)",
+      "event EscrowRefunded(uint256 indexed listingId, address buyer, uint256 amount)",
+      "function previewEscrowAction(uint256) external view returns (bool canRelease, bool canRefund, uint256 timeRemaining)",
+      "function completeEscrow(uint256 listingId) external",
+      "function claimEscrowRefund(uint256 listingId) external",
+      "function getListing(uint256) external view returns(string,address,address,uint64,uint64,uint64,uint128,uint128,uint128,uint256,address,uint8,bool)",
+      "function totalListings() external view returns(uint256)"
+    ];
+  }
+}
 
-const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
+const marketplaceAbi = loadAbi();
+
+const rpcUrl = process.env.RPC_URL;
+const provider = rpcUrl.startsWith("ws")
+  ? new ethers.WebSocketProvider(rpcUrl)
+  : new ethers.JsonRpcProvider(rpcUrl);
 const wallet = new ethers.Wallet(process.env.AUTOMATION_PRIVATE_KEY, provider);
 const marketplace = new ethers.Contract(
   process.env.MARKETPLACE_ADDRESS,
@@ -69,6 +87,29 @@ async function evaluateListing(id) {
   }
 }
 
+async function finalizeEndedAuctions() {
+  const total = Number(await marketplace.totalListings());
+  const now = Math.floor(Date.now() / 1000);
+  for (let id = 1; id <= total; id++) {
+    try {
+      const listing = await marketplace.getListing(id);
+      const state = Number(listing[11]); // EscrowState
+      const exists = Boolean(listing[12]);
+      if (!exists) continue;
+      const biddingEnd = Number(listing[3]);
+      if (state === 0 && now > biddingEnd) {
+        console.log(`⏳ Finalizing auction #${id} (ended)`);
+        const tx = await marketplace.finalizeAuction(id);
+        await tx.wait();
+        console.log(`✅ Auction #${id} finalized`);
+        trackListing(id); // move into escrow tracking if applicable
+      }
+    } catch (err) {
+      // swallow individual finalize errors to keep loop running
+    }
+  }
+}
+
 function bootstrapEvents() {
   marketplace.on("AuctionFinalized", (listingId) => {
     trackListing(Number(listingId));
@@ -88,6 +129,8 @@ async function sweepExistingListings() {
       const listing = await marketplace.getListing(id);
       const state = Number(listing[11]);
       const highestBid = listing[9];
+      const exists = Boolean(listing[12]);
+      if (!exists) continue;
       if (state === 1 && highestBid > 0n) {
         trackListing(id);
       }
@@ -102,7 +145,9 @@ async function main() {
   console.log(`Marketplace @ ${marketplace.target}`);
   bootstrapEvents();
   await sweepExistingListings();
+  await finalizeEndedAuctions();
   setInterval(() => {
+    finalizeEndedAuctions().catch(() => {});
     for (const id of trackedListings.keys()) {
       evaluateListing(id);
     }

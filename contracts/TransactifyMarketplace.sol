@@ -41,6 +41,7 @@ contract TransactifyMarketplace {
 
     mapping(uint256 => Listing) private listings;
     mapping(uint256 => mapping(address => uint256)) public pendingReturns;
+    mapping(string => uint256) private activeListingForProperty;
 
     bool private locked;
 
@@ -102,13 +103,14 @@ contract TransactifyMarketplace {
     ) external returns (uint256 listingId) {
         require(bytes(propertyId).length > 0, "Property id required");
         require(reservePrice > 0, "Reserve price required");
-        require(biddingDuration >= 1 hours, "Bidding duration too short");
+        require(biddingDuration >= 5 minutes, "Bidding duration too short");
         require(minIncrement > 0, "Min increment required");
         require(
             titleRegistry.verifyOwnership(propertyId, msg.sender),
             "Sender not property owner"
         );
         require(titleRegistry.isVerified(propertyId), "Property not verified");
+        require(activeListingForProperty[propertyId] == 0, "Property already listed");
         if (buyNowPrice > 0) {
             require(buyNowPrice >= reservePrice, "Buy now < reserve");
         }
@@ -129,6 +131,7 @@ contract TransactifyMarketplace {
             state: EscrowState.Auction,
             exists: true
         });
+        activeListingForProperty[propertyId] = listingId;
 
         emit ListingCreated(
             listingId,
@@ -197,6 +200,7 @@ contract TransactifyMarketplace {
         require(listing.highestBid == 0, "Already has bids");
 
         listing.state = EscrowState.Cancelled;
+        activeListingForProperty[listing.propertyId] = 0;
         emit ListingCancelled(listingId);
     }
 
@@ -208,6 +212,7 @@ contract TransactifyMarketplace {
 
         if (listing.highestBidder == address(0)) {
             listing.state = EscrowState.Cancelled;
+            activeListingForProperty[listing.propertyId] = 0;
             emit ListingCancelled(listingId);
             return;
         }
@@ -252,6 +257,7 @@ contract TransactifyMarketplace {
         (bool sent, ) = payable(listing.seller).call{value: sellerProceeds}("");
         require(sent, "Seller payout failed");
 
+        activeListingForProperty[listing.propertyId] = 0;
         emit EscrowCompleted(listingId, listing.highestBidder, total);
     }
 
@@ -274,6 +280,7 @@ contract TransactifyMarketplace {
         (bool ok, ) = payable(winner).call{value: refund}("");
         require(ok, "Refund failed");
 
+        activeListingForProperty[listing.propertyId] = 0;
         emit EscrowRefunded(listingId, winner, refund);
     }
 

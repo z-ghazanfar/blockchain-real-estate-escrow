@@ -428,15 +428,16 @@
   </div>
 
   <main>
-    <div class="controls-bar">
-      <div class="filter-group">
-        <button class="filter-btn active" data-filter="all">All</button>
-        <button class="filter-btn" data-filter="auction">Live</button>
-        <button class="filter-btn" data-filter="escrow">Escrow</button>
-        <button class="filter-btn" data-filter="completed">Settled</button>
-      </div>
-      <div class="search-box">
-        <input type="text" id="searchInput" placeholder="Search property ID...">
+      <div class="controls-bar">
+        <div class="filter-group">
+        <button class="filter-btn" data-filter="all">All</button>
+        <button class="filter-btn active" data-filter="live">Live Auctions</button>
+        <button class="filter-btn" data-filter="transfer">Awaiting Transfer</button>
+        <button class="filter-btn" data-filter="sold">Sold</button>
+        <button class="filter-btn" data-filter="failed">Cancelled/Refunded</button>
+        </div>
+        <div class="search-box">
+          <input type="text" id="searchInput" placeholder="Search property ID...">
         <button class="btn btn-primary" onclick="refreshListings()">↻ Refresh</button>
       </div>
     </div>
@@ -451,10 +452,10 @@
 
   <script>
     const ethersLib = window.ethers;
-    const PROVIDER_URL = "https://sepolia.infura.io/v3/YOUR_KEY";
+    const PROVIDER_URL = "wss://sepolia.gateway.tenderly.co/2iN1RFRS9IywHeIVSg5lfR";
     const CONTRACTS = {
-      titleRegistry: "0xFbeB370efc9087C50923C4EacA090a534216295f",
-      marketplace: "0xfe1C6ce96E98a9Ff5e146846B3a65edB3F5163cB"
+      titleRegistry: "0x375292e685BAa1e3160a2b99aaeb2F3AAf6BF541",
+      marketplace: "0x53Bfef2fb9BF8b9729dBB35e138dbb8aF20B59a2"
     };
 
     const marketplaceABI = [
@@ -470,7 +471,7 @@
     const STATE_LABELS = ["Auction", "Escrow", "Settled", "Refunded", "Cancelled"];
 
     let allListings = [];
-    let activeFilter = 'all';
+    let activeFilter = 'live';
 
     document.querySelectorAll('.filter-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -515,9 +516,10 @@
     function renderListings(searchTerm = '') {
       const container = document.getElementById('listingsContainer');
       let filtered = allListings.filter(listing => {
-        if (activeFilter === 'auction' && listing.state !== 0) return false;
-        if (activeFilter === 'escrow' && listing.state !== 1) return false;
-        if (activeFilter === 'completed' && listing.state !== 2) return false;
+        if (activeFilter === 'live' && listing.state !== 0) return false;
+        if (activeFilter === 'transfer' && listing.state !== 1) return false;
+        if (activeFilter === 'sold' && listing.state !== 2) return false;
+        if (activeFilter === 'failed' && listing.state !== 3 && listing.state !== 4) return false;
         if (searchTerm && !listing.propertyId.toLowerCase().includes(searchTerm.toLowerCase())) return false;
         return true;
       });

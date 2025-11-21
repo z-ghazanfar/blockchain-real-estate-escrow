@@ -1,49 +1,31 @@
-### Transactify Property Verifier
+# Transactify Property Verifier
 
-This folder contains a real verifier/oracle service that listens for
-`VerificationRequested` events from the `TitleRegistry` contract and writes
-back `recordVerificationResult` after it probes live data sources (US Census
-geocoding API + optional municipal datasets). Perfect for demoing the
-verification pipeline during class.
+Off-chain service that listens for `VerificationRequested` and writes back `recordVerificationResult` after a real-world address check.
 
----
+## Scripts
+- `npm run once` — one sweep of recent requests; exits when done.
+- `npm run start` — long-lived listener (uses WSS/HTTP RPC depending on `RPC_URL`).
 
-#### Files
+## Env
+Create `.env` in this folder:
+```
+RPC_URL=wss://sepolia.gateway.tenderly.co/2iN1RFRS9IywHeIVSg5lfR
+TITLE_REGISTRY_ADDRESS=0x375292e685BAa1e3160a2b99aaeb2F3AAf6BF541
+VERIFIER_PRIVATE_KEY=0x...
+# Optional: VERIFIER_POLL_INTERVAL_MS=60000 (used for HTTP polling or one-shot)
+# Optional: VERIFIER_START_BLOCK=<block number> (one-shot start point)
+```
+Use a reachable Sepolia RPC; WSS avoids HTTP filter polling.
 
-- `core.js` – Shared functions (address parsing, Census lookup, mock dataset
-  handling). We split this out so it can be unit tested.
-- `propertyVerifier.js` – Runtime script built on `ethers` + `dotenv`. Watches
-  the contract and calls into `core.js`.
-- `mock-properties.json` – Optional overrides for addresses you already
-  verified or need to force-approve (e.g., local county dataset dumps).
-- `.env.example` – Template for the environment variables.
-- `propertyVerifier.test.js` – Node test suite hitting the core logic (no RPC
-  or external network required thanks to mocks).
+## How it works
+- On each request, builds a one-line address and checks Census (see `core.js` for the lookup logic).
+- Writes `recordVerificationResult(propertyId, exists, evidenceURI)`.
+- One-shot mode tracks the last processed block in `.lastBlock.json`.
 
----
-
-#### Setup
-
-```bash
-cd verifier
-cp .env.example .env      # fill RPC + contract address + verifier key
-npm install               # installs ethers + dotenv (see package.json)
-npm test                  # optional - run mocked verifier tests
-npm run start             # or: node propertyVerifier.js
+## Run
+```
+npm install
+npm run once   # or: npm run start
 ```
 
-The service will:
-
-1. Connect to the RPC endpoint in `.env`.
-2. Watch the deployed `TitleRegistry` for `VerificationRequested`.
-3. Try to match the property ID in `mock-properties.json`. If no hit, it
-   transforms the ID (e.g., `123-MAIN-ST-NY`) into a one-line address and calls
-   the public US Census geocoding API. A match there confirms the address exists
-   and produces an evidence URL. If both fail, it emits a rejection with a
-   placeholder evidence URI so auditors know it was denied.
-4. Call `recordVerificationResult` with a boolean and an evidence URI derived
-   from the successful lookup (Census URL, municipal portal, etc.).
-
-You can extend `lookupProperty` with additional APIs or county scrapers. The
-important part is that this service signs verification results from the vetted
-verifier wallet address you pass into the `TitleRegistry` constructor.
+Keep the verifier key secure; run from trusted infra.
